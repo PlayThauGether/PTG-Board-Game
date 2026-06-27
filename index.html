@@ -1,0 +1,1666 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#1a1a2e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>PTG · Board Games</title>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<style>
+/* ============================================================
+   DESIGN SYSTEM — PTG Board Games
+   Palette : nuit de jeu — encre, or doux, craie, accent jade
+   Typo : Cinzel (display titres) + Inter (UI)
+   Signature : cartes qui "glissent" depuis le bas à l'apparition
+   ============================================================ */
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap');
+
+:root {
+  --ink:      #0f0e17;
+  --deep:     #1a1a2e;
+  --surface:  #16213e;
+  --card:     #1e2d4a;
+  --card2:    #243352;
+  --border:   #2e4272;
+  --gold:     #c9a84c;
+  --gold-dim: #a07a30;
+  --chalk:    #e8e3d8;
+  --chalk-dim:#9fa8ba;
+  --jade:     #4ecdc4;
+  --jade-dim: #2b9a93;
+  --red:      #e05263;
+  --green:    #56c490;
+  --r: .75rem;
+  --r-lg: 1.25rem;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--deep);
+  color: var(--chalk);
+  font-family: 'Inter', sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+  min-height: 100dvh;
+  overflow-x: hidden;
+}
+
+/* ---- NOISE TEXTURE OVERLAY ---- */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 9999;
+  opacity: .5;
+}
+
+/* ---- HEADER ---- */
+.app-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+  background: var(--ink);
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 100;
+}
+.app-title {
+  font-family: 'Cinzel', serif;
+  font-size: 1.1rem; font-weight: 700;
+  color: var(--gold);
+  letter-spacing: .05em;
+}
+.app-title span { color: var(--chalk-dim); font-weight: 400; }
+.header-actions { display: flex; gap: .5rem; }
+
+/* ---- NAVIGATION TABS ---- */
+.nav-tabs {
+  display: flex;
+  background: var(--ink);
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.nav-tabs::-webkit-scrollbar { display: none; }
+.nav-tab {
+  flex: 1; min-width: max-content;
+  padding: .85rem 1.25rem;
+  background: none; border: none; cursor: pointer;
+  color: var(--chalk-dim);
+  font-family: 'Inter', sans-serif;
+  font-size: .8rem; font-weight: 500;
+  letter-spacing: .06em; text-transform: uppercase;
+  border-bottom: 2px solid transparent;
+  transition: all .2s;
+  white-space: nowrap;
+}
+.nav-tab:hover { color: var(--chalk); }
+.nav-tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+
+/* ---- MAIN CONTENT ---- */
+.main { padding: 1.25rem; max-width: 680px; margin: 0 auto; }
+
+/* ---- VIEWS ---- */
+.view { display: none; }
+.view.active { display: block; animation: slideUp .3s ease; }
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ---- SECTION LABELS ---- */
+.section-label {
+  font-family: 'Cinzel', serif;
+  font-size: .7rem; font-weight: 600;
+  letter-spacing: .12em; text-transform: uppercase;
+  color: var(--gold-dim);
+  margin-bottom: .75rem;
+}
+
+/* ---- CARD COMPONENTS ---- */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+}
+.card-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 1rem;
+}
+.card-title {
+  font-family: 'Cinzel', serif;
+  font-size: 1rem; font-weight: 600;
+  color: var(--chalk);
+}
+.card-badge {
+  font-size: .7rem; font-weight: 600;
+  padding: .2rem .6rem; border-radius: 999px;
+  background: var(--surface);
+  color: var(--chalk-dim);
+  border: 1px solid var(--border);
+}
+
+/* ---- GAME CARDS ---- */
+.game-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: .75rem;
+  margin-bottom: 1.5rem;
+}
+.game-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 1.1rem 1rem;
+  cursor: pointer;
+  transition: all .2s;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.game-card::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(135deg, transparent 60%, rgba(201,168,76,.06));
+  pointer-events: none;
+}
+.game-card:hover { border-color: var(--gold-dim); transform: translateY(-2px); }
+.game-card.selected { border-color: var(--jade); background: var(--card2); }
+.game-emoji { font-size: 2rem; margin-bottom: .5rem; }
+.game-name {
+  font-family: 'Cinzel', serif;
+  font-size: .8rem; font-weight: 600;
+  color: var(--chalk);
+  line-height: 1.3;
+}
+.game-desc { font-size: .7rem; color: var(--chalk-dim); margin-top: .25rem; }
+
+/* ---- PLAYER CHIPS ---- */
+.player-list { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: .75rem; }
+.player-chip {
+  display: flex; align-items: center; gap: .4rem;
+  padding: .3rem .7rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: .8rem;
+  color: var(--chalk);
+}
+.player-chip .remove {
+  background: none; border: none; cursor: pointer;
+  color: var(--chalk-dim); font-size: .9rem; line-height: 1;
+  padding: 0 0 0 .2rem;
+  transition: color .2s;
+}
+.player-chip .remove:hover { color: var(--red); }
+
+/* ---- INPUTS ---- */
+.input-row { display: flex; gap: .5rem; }
+.input-field {
+  flex: 1;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: .65rem .9rem;
+  color: var(--chalk);
+  font-family: 'Inter', sans-serif;
+  font-size: .9rem;
+  outline: none;
+  transition: border-color .2s;
+}
+.input-field:focus { border-color: var(--jade); }
+.input-field::placeholder { color: var(--chalk-dim); }
+
+/* ---- BUTTONS ---- */
+.btn {
+  padding: .65rem 1.2rem;
+  border: none; border-radius: var(--r);
+  font-family: 'Inter', sans-serif;
+  font-size: .85rem; font-weight: 600;
+  cursor: pointer;
+  transition: all .2s;
+  letter-spacing: .02em;
+}
+.btn-primary {
+  background: var(--jade);
+  color: var(--ink);
+}
+.btn-primary:hover { background: var(--jade-dim); }
+.btn-primary:disabled { opacity: .4; cursor: not-allowed; }
+.btn-secondary {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--chalk);
+}
+.btn-secondary:hover { border-color: var(--chalk-dim); }
+.btn-gold {
+  background: var(--gold);
+  color: var(--ink);
+}
+.btn-gold:hover { background: var(--gold-dim); }
+.btn-danger {
+  background: transparent;
+  border: 1px solid var(--red);
+  color: var(--red);
+}
+.btn-danger:hover { background: var(--red); color: white; }
+.btn-sm { padding: .4rem .8rem; font-size: .78rem; }
+.btn-full { width: 100%; }
+.btn-icon { font-size: 1rem; }
+
+/* ---- SCORE SHEET ---- */
+.score-section-title {
+  font-family: 'Cinzel', serif;
+  font-size: .75rem; font-weight: 600; letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--gold-dim);
+  padding: .5rem 0 .3rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: .6rem;
+}
+.score-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: .45rem 0;
+  border-bottom: 1px solid rgba(46,66,114,.4);
+}
+.score-label {
+  font-size: .85rem; color: var(--chalk);
+  flex: 1;
+}
+.score-label small { display: block; font-size: .7rem; color: var(--chalk-dim); }
+.score-players-row {
+  display: flex; gap: .5rem;
+}
+.score-input {
+  width: 70px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: .4rem;
+  padding: .35rem .5rem;
+  color: var(--chalk);
+  font-family: 'Inter', sans-serif;
+  font-size: .9rem; font-weight: 500;
+  text-align: center;
+  outline: none;
+  transition: border-color .2s;
+}
+.score-input:focus { border-color: var(--jade); }
+.score-input.negative { color: var(--red); }
+
+.score-total-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: .75rem 0;
+  margin-top: .5rem;
+  border-top: 2px solid var(--gold-dim);
+}
+.score-total-label {
+  font-family: 'Cinzel', serif;
+  font-size: .9rem; font-weight: 700;
+  color: var(--gold);
+}
+.score-total-values { display: flex; gap: .5rem; }
+.score-total-val {
+  width: 70px; text-align: center;
+  font-size: 1.1rem; font-weight: 700;
+  color: var(--chalk);
+}
+.score-total-val.winner { color: var(--jade); }
+
+/* ---- SKULL KING MANCHE TABLE ---- */
+.manche-table { width: 100%; border-collapse: collapse; }
+.manche-table th {
+  font-family: 'Cinzel', serif;
+  font-size: .7rem; font-weight: 600; letter-spacing: .06em;
+  color: var(--gold-dim); text-transform: uppercase;
+  padding: .5rem .4rem;
+  border-bottom: 1px solid var(--border);
+}
+.manche-table td {
+  padding: .35rem .4rem;
+  border-bottom: 1px solid rgba(46,66,114,.3);
+  vertical-align: middle;
+}
+.manche-table .manche-num {
+  font-family: 'Cinzel', serif;
+  font-size: .8rem; color: var(--chalk-dim);
+  text-align: center;
+}
+.manche-table input[type="number"] {
+  width: 50px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: .35rem;
+  padding: .3rem .35rem;
+  color: var(--chalk);
+  font-size: .85rem; font-weight: 500;
+  text-align: center;
+  outline: none;
+}
+.manche-table input[type="number"]:focus { border-color: var(--jade); }
+.player-header { font-size: .75rem; color: var(--chalk); }
+.running-total {
+  font-weight: 600; font-size: .9rem;
+  text-align: center; color: var(--jade);
+}
+.manche-pts.positive { color: var(--green); }
+.manche-pts.negative { color: var(--red); }
+
+/* ---- RESULTS PODIUM ---- */
+.podium {
+  display: flex; align-items: flex-end; justify-content: center;
+  gap: .75rem; margin: 1.5rem 0;
+}
+.podium-place {
+  display: flex; flex-direction: column; align-items: center;
+  flex: 1; max-width: 110px;
+}
+.podium-bar {
+  width: 100%;
+  border-radius: .5rem .5rem 0 0;
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: flex-end;
+  padding-bottom: .5rem;
+  min-height: 40px;
+}
+.podium-bar.p1 { background: linear-gradient(180deg, #c9a84c22, #c9a84c44); border: 1px solid var(--gold); min-height: 90px; }
+.podium-bar.p2 { background: linear-gradient(180deg, #9fa8ba22, #9fa8ba33); border: 1px solid var(--chalk-dim); min-height: 65px; }
+.podium-bar.p3 { background: linear-gradient(180deg, #a07a3022, #a07a3033); border: 1px solid var(--gold-dim); min-height: 45px; }
+.podium-bar.pN { background: var(--surface); border: 1px solid var(--border); min-height: 35px; }
+.podium-medal { font-size: 1.2rem; }
+.podium-score { font-size: 1rem; font-weight: 700; color: var(--chalk); }
+.podium-name { font-size: .75rem; color: var(--chalk-dim); margin-top: .3rem; text-align: center; }
+
+/* ---- HISTORY LIST ---- */
+.history-item {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: .9rem 1.1rem;
+  margin-bottom: .6rem;
+  display: flex; align-items: center; justify-content: space-between;
+  cursor: pointer;
+  transition: border-color .2s;
+}
+.history-item:hover { border-color: var(--chalk-dim); }
+.history-meta { flex: 1; }
+.history-game { font-family: 'Cinzel', serif; font-size: .85rem; color: var(--chalk); }
+.history-date { font-size: .72rem; color: var(--chalk-dim); }
+.history-winner { font-size: .8rem; font-weight: 600; color: var(--jade); }
+.history-arrow { color: var(--chalk-dim); font-size: 1.1rem; }
+
+/* ---- STATS ---- */
+.stats-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: .75rem; margin-bottom: 1rem;
+}
+.stat-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 1rem;
+  text-align: center;
+}
+.stat-value {
+  font-family: 'Cinzel', serif;
+  font-size: 1.6rem; font-weight: 700;
+  color: var(--gold);
+}
+.stat-label { font-size: .72rem; color: var(--chalk-dim); margin-top: .2rem; }
+
+/* ---- TOAST ---- */
+.toast {
+  position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%) translateY(100px);
+  background: var(--jade);
+  color: var(--ink);
+  font-weight: 600; font-size: .85rem;
+  padding: .65rem 1.4rem;
+  border-radius: 999px;
+  z-index: 9998;
+  transition: transform .3s ease;
+  pointer-events: none;
+  white-space: nowrap;
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+
+/* ---- MODAL ---- */
+.modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(10,10,20,.8);
+  z-index: 1000;
+  align-items: center; justify-content: center;
+  padding: 1rem;
+}
+.modal-overlay.open { display: flex; animation: fadeIn .2s ease; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 1.5rem;
+  width: 100%; max-width: 440px;
+  max-height: 90dvh; overflow-y: auto;
+  animation: modalSlide .3s ease;
+}
+@keyframes modalSlide {
+  from { opacity: 0; transform: scale(.95) translateY(12px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+.modal-title {
+  font-family: 'Cinzel', serif;
+  font-size: 1.1rem; font-weight: 700;
+  color: var(--gold);
+  margin-bottom: 1.25rem;
+}
+.modal-actions { display: flex; gap: .5rem; justify-content: flex-end; margin-top: 1.25rem; }
+
+/* ---- FLIP7 MANCHES ---- */
+.flip7-manche {
+  background: var(--card2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: .75rem 1rem;
+  margin-bottom: .6rem;
+}
+.flip7-manche-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: .5rem;
+}
+.flip7-manche-num {
+  font-family: 'Cinzel', serif;
+  font-size: .75rem; color: var(--gold-dim); font-weight: 600;
+}
+.flip7-player-scores { display: flex; flex-direction: column; gap: .3rem; }
+.flip7-player-row { display: flex; align-items: center; justify-content: space-between; }
+.flip7-player-name { font-size: .82rem; color: var(--chalk); }
+.flip7-score-controls { display: flex; align-items: center; gap: .5rem; }
+.btn-num { 
+  width: 28px; height: 28px;
+  border-radius: 50%; border: none; cursor: pointer;
+  font-size: 1rem; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--surface); color: var(--chalk); border: 1px solid var(--border);
+  transition: all .15s;
+}
+.btn-num:hover { border-color: var(--jade); color: var(--jade); }
+.flip7-score-display { 
+  min-width: 40px; text-align: center;
+  font-size: .95rem; font-weight: 600; color: var(--chalk);
+}
+.flip7-total { 
+  font-family: 'Cinzel', serif;
+  font-size: .85rem; font-weight: 700; color: var(--jade);
+}
+
+/* ---- PLAYER COLUMN HEADERS ---- */
+.player-col-headers {
+  display: flex; gap: .5rem;
+  justify-content: flex-end;
+  margin-bottom: .25rem;
+}
+.player-col-name {
+  width: 70px; text-align: center;
+  font-size: .72rem; color: var(--chalk-dim);
+  font-weight: 500;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* ---- DIVIDER ---- */
+.divider { border: none; border-top: 1px solid var(--border); margin: 1rem 0; }
+
+/* ---- EMPTY STATE ---- */
+.empty {
+  text-align: center; padding: 2.5rem 1rem;
+  color: var(--chalk-dim); font-size: .9rem;
+}
+.empty-icon { font-size: 2.5rem; margin-bottom: .5rem; }
+
+/* ---- SELECT ---- */
+.select-field {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: .65rem .9rem;
+  color: var(--chalk);
+  font-family: 'Inter', sans-serif;
+  font-size: .9rem;
+  outline: none;
+  cursor: pointer;
+}
+.select-field:focus { border-color: var(--jade); }
+
+/* ---- RADIO PILLS ---- */
+.radio-pills { display: flex; gap: .4rem; flex-wrap: wrap; }
+.radio-pill { display: none; }
+.radio-pill-label {
+  padding: .4rem .9rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: .8rem; cursor: pointer;
+  color: var(--chalk-dim);
+  transition: all .2s;
+}
+.radio-pill:checked + .radio-pill-label {
+  background: var(--jade);
+  border-color: var(--jade);
+  color: var(--ink);
+  font-weight: 600;
+}
+
+/* ---- CHECKBOX TOGGLE ---- */
+.toggle-row { display: flex; align-items: center; justify-content: space-between; padding: .3rem 0; }
+.toggle-label { font-size: .85rem; color: var(--chalk); }
+.toggle-switch { position: relative; width: 40px; height: 22px; }
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+.toggle-slider {
+  position: absolute; inset: 0;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 999px; cursor: pointer;
+  transition: background .2s;
+}
+.toggle-slider::after {
+  content: ''; position: absolute;
+  width: 16px; height: 16px;
+  left: 2px; top: 2px;
+  background: var(--chalk-dim);
+  border-radius: 50%;
+  transition: transform .2s;
+}
+.toggle-switch input:checked + .toggle-slider { background: var(--jade); border-color: var(--jade-dim); }
+.toggle-switch input:checked + .toggle-slider::after { transform: translateX(18px); background: var(--ink); }
+
+/* ---- ANIMATIONS ---- */
+@keyframes confetti { 
+  0% { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(60px) rotate(720deg); opacity: 0; }
+}
+.confetti-piece {
+  position: fixed; pointer-events: none; z-index: 9997;
+  width: 8px; height: 8px;
+  border-radius: 2px;
+  animation: confetti .8s ease-in forwards;
+}
+
+/* ---- RESPONSIVE ---- */
+@media (max-width: 400px) {
+  .score-input { width: 58px; }
+  .player-col-name { width: 58px; }
+  .score-total-val { width: 58px; }
+}
+</style>
+</head>
+<body>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- HEADER -->
+<header class="app-header">
+  <div class="app-title">PTG <span>· Jeux de société</span></div>
+  <div class="header-actions">
+    <button class="btn btn-secondary btn-sm" onclick="showView('players')">👥</button>
+  </div>
+</header>
+
+<!-- NAV TABS -->
+<nav class="nav-tabs">
+  <button class="nav-tab active" onclick="showView('home')">🎲 Jouer</button>
+  <button class="nav-tab" onclick="showView('history')">📋 Historique</button>
+  <button class="nav-tab" onclick="showView('stats')">📊 Stats</button>
+  <button class="nav-tab" onclick="showView('players')">👥 Joueurs</button>
+</nav>
+
+<!-- MAIN CONTENT -->
+<main class="main">
+
+  <!-- ======== VIEW : HOME ======== -->
+  <section class="view active" id="view-home">
+    <p class="section-label">Choisir un jeu</p>
+    <div class="game-grid" id="game-grid"></div>
+
+    <div id="session-setup" style="display:none">
+      <p class="section-label">Joueurs de la partie</p>
+      <div class="card">
+        <div class="player-list" id="selected-players-list"></div>
+        <div class="input-row" style="margin-bottom:.75rem">
+          <select class="select-field" id="player-picker" style="flex:1"></select>
+          <button class="btn btn-secondary" onclick="addPlayerToSession()">+ Ajouter</button>
+        </div>
+        <button class="btn btn-primary btn-full" onclick="startGame()" id="btn-start-game" disabled>
+          🃏 Lancer la partie
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======== VIEW : SCORE IN PROGRESS ======== -->
+  <section class="view" id="view-game">
+    <!-- Game content injected dynamically -->
+  </section>
+
+  <!-- ======== VIEW : RESULTS ======== -->
+  <section class="view" id="view-results">
+    <p class="section-label">Résultats de la partie</p>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title" id="result-game-name"></div>
+        <div class="card-badge" id="result-date"></div>
+      </div>
+      <div class="podium" id="podium"></div>
+      <div id="full-results-table"></div>
+    </div>
+    <div style="display:flex; gap:.5rem; margin-top:.5rem">
+      <button class="btn btn-secondary" style="flex:1" onclick="showView('home')">🎲 Nouvelle partie</button>
+      <button class="btn btn-gold" style="flex:1" onclick="saveAndFinish()">💾 Sauvegarder</button>
+    </div>
+  </section>
+
+  <!-- ======== VIEW : HISTORY ======== -->
+  <section class="view" id="view-history">
+    <p class="section-label">Parties jouées</p>
+    <div id="history-list"></div>
+  </section>
+
+  <!-- ======== VIEW : STATS ======== -->
+  <section class="view" id="view-stats">
+    <p class="section-label">Statistiques</p>
+    <div class="stats-grid" id="stats-grid"></div>
+    <div id="stats-details"></div>
+  </section>
+
+  <!-- ======== VIEW : PLAYERS ======== -->
+  <section class="view" id="view-players">
+    <p class="section-label">Gestion des joueurs PTG</p>
+    <div class="card">
+      <div class="input-row">
+        <input class="input-field" id="new-player-name" placeholder="Prénom du joueur..." maxlength="20">
+        <input class="input-field" id="new-player-emoji" placeholder="🎭" maxlength="2" style="width:60px;flex:0">
+        <button class="btn btn-primary" onclick="addPlayer()">+</button>
+      </div>
+    </div>
+    <div id="players-list"></div>
+  </section>
+
+</main>
+
+<!-- MODAL : Détail partie historique -->
+<div class="modal-overlay" id="modal-history-detail">
+  <div class="modal">
+    <div class="modal-title">📋 Détail de la partie</div>
+    <div id="modal-history-content"></div>
+    <div class="modal-actions">
+      <button class="btn btn-danger btn-sm" onclick="deleteHistoryItem()">Supprimer</button>
+      <button class="btn btn-secondary" onclick="closeModal('modal-history-detail')">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+//  FIREBASE CONFIG
+// ============================================================
+const firebaseConfig = {
+  apiKey: "AIzaSyBQ_hOT466aPbCEfGH9BiAj4-Ym9H_Etz0",
+  authDomain: "ptg-boardgame.firebaseapp.com",
+  databaseURL: "https://ptg-boardgame-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "ptg-boardgame",
+  storageBucket: "ptg-boardgame.firebasestorage.app",
+  messagingSenderId: "151030083582",
+  appId: "1:151030083582:web:9fb6aac2c697230cc71aaf",
+  measurementId: "G-S0Z55XGHJ9"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const PTG_REF = 'ptg_boardgames';
+
+// ============================================================
+//  GAME DEFINITIONS
+// ============================================================
+const GAMES = {
+  flip7: {
+    id: 'flip7',
+    name: 'Flip 7',
+    emoji: '🃏',
+    desc: 'Stop ou Encore · 200 pts',
+    type: 'manches',       // score par manches
+    target: 200,           // score cible
+    higherWins: true,
+    renderScore: renderFlip7,
+    computeResult: computeFlip7Result,
+  },
+  skull_king: {
+    id: 'skull_king',
+    name: 'Skull King',
+    emoji: '💀',
+    desc: 'Jeu de plis · 10 manches',
+    type: 'manches',
+    target: null,
+    higherWins: true,
+    manches: 10,
+    renderScore: renderSkullKing,
+    computeResult: computeSkullKingResult,
+  },
+  agricola: {
+    id: 'agricola',
+    name: 'Agricola',
+    emoji: '🌾',
+    desc: 'Décompte final · 10 catégories',
+    type: 'single_score',
+    higherWins: true,
+    renderScore: renderAgricola,
+    computeResult: computeAgricolaResult,
+  }
+};
+
+// ============================================================
+//  APP STATE
+// ============================================================
+let state = {
+  players: [],      // { id, name, emoji }
+  sessions: [],     // parties jouées (local + firebase)
+  session: null,    // partie en cours
+  currentView: 'home',
+  historySelectedId: null,
+};
+
+// ============================================================
+//  INIT
+// ============================================================
+function init() {
+  loadLocal();
+  loadFromFirebase();
+  renderGameGrid();
+  renderPlayersList();
+  updatePlayerPicker();
+}
+
+function loadLocal() {
+  try {
+    state.players = JSON.parse(localStorage.getItem('ptg_players') || '[]');
+    state.sessions = JSON.parse(localStorage.getItem('ptg_sessions') || '[]');
+  } catch(e) { state.players = []; state.sessions = []; }
+}
+
+function saveLocal() {
+  localStorage.setItem('ptg_players', JSON.stringify(state.players));
+  localStorage.setItem('ptg_sessions', JSON.stringify(state.sessions));
+}
+
+function loadFromFirebase() {
+  db.ref(PTG_REF + '/sessions').on('value', snap => {
+    const data = snap.val();
+    if (data) {
+      // Merge firebase sessions into local (avoid duplicates by id)
+      const fbSessions = Object.values(data);
+      fbSessions.forEach(s => {
+        if (!state.sessions.find(x => x.id === s.id)) {
+          state.sessions.push(s);
+        }
+      });
+      saveLocal();
+      renderHistoryList();
+      renderStats();
+    }
+  });
+  db.ref(PTG_REF + '/players').on('value', snap => {
+    const data = snap.val();
+    if (data) {
+      const fbPlayers = Object.values(data);
+      fbPlayers.forEach(p => {
+        if (!state.players.find(x => x.id === p.id)) {
+          state.players.push(p);
+        }
+      });
+      saveLocal();
+      renderPlayersList();
+      updatePlayerPicker();
+    }
+  });
+}
+
+// ============================================================
+//  VIEWS
+// ============================================================
+function showView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('view-' + name).classList.add('active');
+  const tabs = { home: 0, history: 1, stats: 2, players: 3 };
+  const tabIndex = tabs[name] ?? -1;
+  if (tabIndex >= 0) {
+    document.querySelectorAll('.nav-tab')[tabIndex]?.classList.add('active');
+  }
+  state.currentView = name;
+  if (name === 'history') renderHistoryList();
+  if (name === 'stats') renderStats();
+  if (name === 'players') renderPlayersList();
+}
+
+// ============================================================
+//  PLAYERS
+// ============================================================
+function addPlayer() {
+  const name = document.getElementById('new-player-name').value.trim();
+  const emoji = document.getElementById('new-player-emoji').value.trim() || '🎭';
+  if (!name) return showToast('Entre un prénom !');
+  if (state.players.find(p => p.name.toLowerCase() === name.toLowerCase())) {
+    return showToast('Ce joueur existe déjà');
+  }
+  const player = { id: Date.now().toString(), name, emoji };
+  state.players.push(player);
+  saveLocal();
+  db.ref(PTG_REF + '/players/' + player.id).set(player);
+  document.getElementById('new-player-name').value = '';
+  document.getElementById('new-player-emoji').value = '';
+  renderPlayersList();
+  updatePlayerPicker();
+  showToast('✅ ' + name + ' ajouté·e !');
+}
+
+function deletePlayer(id) {
+  if (!confirm('Supprimer ce joueur ?')) return;
+  state.players = state.players.filter(p => p.id !== id);
+  saveLocal();
+  db.ref(PTG_REF + '/players/' + id).remove();
+  renderPlayersList();
+  updatePlayerPicker();
+}
+
+function renderPlayersList() {
+  const el = document.getElementById('players-list');
+  if (!state.players.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">👥</div>Aucun joueur. Ajoutes-en un !</div>';
+    return;
+  }
+  el.innerHTML = state.players.map(p => `
+    <div class="card" style="padding:.8rem 1.1rem; display:flex; align-items:center; justify-content:space-between; margin-bottom:.5rem">
+      <span style="font-size:1.3rem">${p.emoji}</span>
+      <span style="font-size:.9rem; font-weight:500; color:var(--chalk); flex:1; margin-left:.75rem">${p.name}</span>
+      <button class="btn btn-danger btn-sm" onclick="deletePlayer('${p.id}')">✕</button>
+    </div>
+  `).join('');
+}
+
+function updatePlayerPicker() {
+  const sel = document.getElementById('player-picker');
+  sel.innerHTML = '<option value="">— Sélectionner un joueur —</option>' +
+    state.players.map(p => `<option value="${p.id}">${p.emoji} ${p.name}</option>`).join('');
+}
+
+// ============================================================
+//  GAME SELECTION & SESSION SETUP
+// ============================================================
+function renderGameGrid() {
+  document.getElementById('game-grid').innerHTML = Object.values(GAMES).map(g => `
+    <div class="game-card" id="game-card-${g.id}" onclick="selectGame('${g.id}')">
+      <div class="game-emoji">${g.emoji}</div>
+      <div class="game-name">${g.name}</div>
+      <div class="game-desc">${g.desc}</div>
+    </div>
+  `).join('');
+}
+
+let selectedGameId = null;
+let sessionPlayers = []; // { id, name, emoji }
+
+function selectGame(gameId) {
+  selectedGameId = gameId;
+  document.querySelectorAll('.game-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById('game-card-' + gameId).classList.add('selected');
+  document.getElementById('session-setup').style.display = 'block';
+  sessionPlayers = [];
+  renderSessionPlayers();
+  updateStartBtn();
+}
+
+function addPlayerToSession() {
+  const sel = document.getElementById('player-picker');
+  const id = sel.value;
+  if (!id) return;
+  if (sessionPlayers.find(p => p.id === id)) return showToast('Déjà dans la partie');
+  const player = state.players.find(p => p.id === id);
+  if (player) {
+    sessionPlayers.push(player);
+    renderSessionPlayers();
+    sel.value = '';
+    updateStartBtn();
+  }
+}
+
+function removeSessionPlayer(id) {
+  sessionPlayers = sessionPlayers.filter(p => p.id !== id);
+  renderSessionPlayers();
+  updateStartBtn();
+}
+
+function renderSessionPlayers() {
+  document.getElementById('selected-players-list').innerHTML = sessionPlayers.map(p => `
+    <div class="player-chip">
+      <span>${p.emoji}</span>
+      <span>${p.name}</span>
+      <button class="remove" onclick="removeSessionPlayer('${p.id}')">×</button>
+    </div>
+  `).join('') || '<span style="color:var(--chalk-dim);font-size:.82rem">Aucun joueur sélectionné</span>';
+}
+
+function updateStartBtn() {
+  document.getElementById('btn-start-game').disabled = sessionPlayers.length < 2;
+}
+
+function startGame() {
+  if (!selectedGameId || sessionPlayers.length < 2) return;
+  const game = GAMES[selectedGameId];
+  state.session = {
+    id: Date.now().toString(),
+    gameId: selectedGameId,
+    gameName: game.name,
+    gameEmoji: game.emoji,
+    players: sessionPlayers.map(p => ({ ...p })),
+    startedAt: new Date().toISOString(),
+    data: {},
+    finished: false,
+  };
+  showView('game');
+  game.renderScore();
+}
+
+// ============================================================
+//  FLIP 7
+// ============================================================
+function renderFlip7() {
+  const { players } = state.session;
+  // Init data
+  if (!state.session.data.manches) {
+    state.session.data.manches = [newFlip7Manche(players)];
+    state.session.data.totals = Object.fromEntries(players.map(p => [p.id, 0]));
+  }
+
+  const el = document.getElementById('view-game');
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+      <div>
+        <div style="font-family:'Cinzel',serif;font-size:1.2rem;color:var(--gold)">🃏 Flip 7</div>
+        <div style="font-size:.75rem;color:var(--chalk-dim)">Objectif : 200 points</div>
+      </div>
+      <button class="btn btn-gold btn-sm" onclick="finishFlip7()">Terminer ↗</button>
+    </div>
+    <!-- TOTAUX -->
+    <div class="card" style="padding:.75rem 1rem;margin-bottom:1rem">
+      <div class="section-label" style="margin-bottom:.5rem">Scores totaux</div>
+      <div id="flip7-totals" style="display:flex;gap:.5rem;flex-wrap:wrap"></div>
+    </div>
+    <!-- MANCHES -->
+    <p class="section-label">Manches</p>
+    <div id="flip7-manches"></div>
+    <button class="btn btn-secondary btn-full" onclick="addFlip7Manche()" style="margin-bottom:.5rem">
+      + Nouvelle manche
+    </button>
+  `;
+  updateFlip7();
+}
+
+function newFlip7Manche(players) {
+  return { scores: Object.fromEntries(players.map(p => [p.id, 0])), flip7Bonus: Object.fromEntries(players.map(p => [p.id, false])) };
+}
+
+function addFlip7Manche() {
+  state.session.data.manches.push(newFlip7Manche(state.session.players));
+  updateFlip7();
+}
+
+function updateFlip7() {
+  const { players, data } = state.session;
+  // Recalcule totaux
+  data.totals = Object.fromEntries(players.map(p => [p.id, 0]));
+  data.manches.forEach(m => {
+    players.forEach(p => {
+      data.totals[p.id] += m.scores[p.id] || 0;
+    });
+  });
+
+  // Totaux display
+  const totalsEl = document.getElementById('flip7-totals');
+  if (totalsEl) {
+    totalsEl.innerHTML = players.map(p => {
+      const total = data.totals[p.id];
+      const pct = Math.min(100, Math.round(total / 2));
+      const color = total >= 200 ? 'var(--jade)' : total >= 150 ? 'var(--gold)' : 'var(--chalk)';
+      return `
+        <div style="flex:1;min-width:80px;text-align:center;padding:.4rem;background:var(--surface);border-radius:var(--r);border:1px solid var(--border)">
+          <div style="font-size:.72rem;color:var(--chalk-dim)">${p.emoji} ${p.name}</div>
+          <div style="font-size:1.3rem;font-weight:700;color:${color}">${total}</div>
+          <div style="height:3px;background:var(--border);border-radius:2px;margin-top:.3rem">
+            <div style="height:100%;width:${pct}%;background:${color};border-radius:2px;transition:width .3s"></div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // Manches display
+  const manchesEl = document.getElementById('flip7-manches');
+  if (manchesEl) {
+    manchesEl.innerHTML = data.manches.map((m, mi) => `
+      <div class="flip7-manche">
+        <div class="flip7-manche-header">
+          <span class="flip7-manche-num">Manche ${mi + 1}</span>
+          ${data.manches.length > 1 ? `<button class="btn btn-danger btn-sm" onclick="removeFlip7Manche(${mi})">✕</button>` : ''}
+        </div>
+        <div class="flip7-player-scores">
+          ${players.map(p => `
+            <div class="flip7-player-row">
+              <span class="flip7-player-name">${p.emoji} ${p.name}</span>
+              <div class="flip7-score-controls">
+                <button class="btn-num" onclick="changeFlip7Score(${mi},'${p.id}',-1)">−</button>
+                <span class="flip7-score-display">${m.scores[p.id] || 0}</span>
+                <button class="btn-num" onclick="changeFlip7Score(${mi},'${p.id}',1)">+</button>
+                <button class="btn-num ${m.flip7Bonus?.[p.id] ? 'btn-flip7-active' : ''}" 
+                  style="${m.flip7Bonus?.[p.id] ? 'background:var(--gold);border-color:var(--gold);color:var(--ink)' : ''}"
+                  onclick="toggleFlip7Bonus(${mi},'${p.id}')" title="Flip 7 (+15pts)">🃏</button>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `).join('');
+  }
+}
+
+function changeFlip7Score(mancIdx, playerId, delta) {
+  const m = state.session.data.manches[mancIdx];
+  m.scores[playerId] = Math.max(0, (m.scores[playerId] || 0) + delta);
+  updateFlip7();
+}
+
+function toggleFlip7Bonus(mancheIdx, playerId) {
+  const m = state.session.data.manches[mancheIdx];
+  if (!m.flip7Bonus) m.flip7Bonus = {};
+  const wasActive = !!m.flip7Bonus[playerId];
+  m.flip7Bonus[playerId] = !wasActive;
+  // +15 ou -15
+  m.scores[playerId] = Math.max(0, (m.scores[playerId] || 0) + (wasActive ? -15 : 15));
+  updateFlip7();
+}
+
+function removeFlip7Manche(idx) {
+  state.session.data.manches.splice(idx, 1);
+  updateFlip7();
+}
+
+function computeFlip7Result() {
+  const { players, data } = state.session;
+  return players.map(p => ({
+    ...p,
+    total: data.totals?.[p.id] || 0,
+    details: data.manches?.map((m, i) => `M${i+1}: ${m.scores[p.id] || 0}pts`).join(', ')
+  })).sort((a, b) => b.total - a.total);
+}
+
+function finishFlip7() {
+  showResults(computeFlip7Result());
+}
+
+// ============================================================
+//  SKULL KING
+// ============================================================
+function renderSkullKing() {
+  const { players } = state.session;
+  const nbManches = 10;
+  if (!state.session.data.manches) {
+    state.session.data.manches = Array.from({length: nbManches}, (_, i) => ({
+      num: i + 1,
+      cards: i + 1,
+      players: Object.fromEntries(players.map(p => [p.id, { mise: 0, plis: 0, bonus: 0 }]))
+    }));
+  }
+
+  const el = document.getElementById('view-game');
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+      <div>
+        <div style="font-family:'Cinzel',serif;font-size:1.2rem;color:var(--gold)">💀 Skull King</div>
+        <div style="font-size:.75rem;color:var(--chalk-dim)">10 manches · système Skull King classique</div>
+      </div>
+      <button class="btn btn-gold btn-sm" onclick="finishSkullKing()">Terminer ↗</button>
+    </div>
+    <!-- TOTAUX -->
+    <div class="card" style="padding:.75rem 1rem;margin-bottom:1rem">
+      <div class="section-label" style="margin-bottom:.5rem">Scores cumulés</div>
+      <div id="sk-totals"></div>
+    </div>
+    <!-- TABLE MANCHES -->
+    <p class="section-label">Saisie des manches</p>
+    <div id="sk-manches"></div>
+  `;
+  updateSkullKing();
+}
+
+function skullKingPoints(mise, plis, bonus, cards) {
+  if (mise === 0) {
+    if (plis === 0) return cards * 10; // Mise 0 réussie
+    else return -(cards * 10);
+  } else {
+    if (mise === plis) return mise * 20 + bonus;
+    else return -(Math.abs(mise - plis) * 10);
+  }
+}
+
+function updateSkullKing() {
+  const { players, data } = state.session;
+  // Calcul totaux
+  const totaux = Object.fromEntries(players.map(p => [p.id, 0]));
+  const manchePts = data.manches.map(m => {
+    const pts = {};
+    players.forEach(p => {
+      const d = m.players[p.id];
+      const p_val = skullKingPoints(d.mise, d.plis, d.bonus, m.cards);
+      pts[p.id] = p_val;
+      totaux[p.id] += p_val;
+    });
+    return pts;
+  });
+
+  // Totaux display
+  const totauxEl = document.getElementById('sk-totals');
+  if (totauxEl) {
+    totauxEl.innerHTML = `<div style="display:flex;gap:.5rem;flex-wrap:wrap">` +
+      players.map(p => {
+        const t = totaux[p.id];
+        const color = t > 0 ? 'var(--green)' : t < 0 ? 'var(--red)' : 'var(--chalk)';
+        return `
+          <div style="flex:1;min-width:70px;text-align:center;padding:.4rem;background:var(--surface);border-radius:var(--r);border:1px solid var(--border)">
+            <div style="font-size:.7rem;color:var(--chalk-dim)">${p.emoji} ${p.name}</div>
+            <div style="font-size:1.2rem;font-weight:700;color:${color}">${t > 0 ? '+' : ''}${t}</div>
+          </div>
+        `;
+      }).join('') + '</div>';
+  }
+
+  // Manches
+  const manchesEl = document.getElementById('sk-manches');
+  if (manchesEl) {
+    manchesEl.innerHTML = data.manches.map((m, mi) => {
+      const pts = manchePts[mi];
+      return `
+        <div class="card" style="padding:.75rem;margin-bottom:.6rem">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem">
+            <span style="font-family:'Cinzel',serif;font-size:.75rem;color:var(--gold-dim)">Manche ${m.num} · ${m.cards} carte${m.cards > 1 ? 's' : ''}</span>
+            <span style="font-size:.7rem;color:var(--chalk-dim)">${players.map(p => {
+              const pv = pts[p.id];
+              const col = pv > 0 ? 'var(--green)' : pv < 0 ? 'var(--red)' : 'var(--chalk-dim)';
+              return `<span style="color:${col}">${p.name.split(' ')[0]}: ${pv > 0 ? '+' : ''}${pv}</span>`;
+            }).join(' · ')}</span>
+          </div>
+          <div style="display:grid;grid-template-columns:${players.map(()=>'1fr').join(' ')};gap:.4rem">
+            ${players.map(p => {
+              const d = m.players[p.id];
+              return `
+                <div style="text-align:center">
+                  <div style="font-size:.7rem;color:var(--chalk-dim);margin-bottom:.3rem">${p.emoji} ${p.name.split(' ')[0]}</div>
+                  <div style="display:flex;flex-direction:column;gap:.2rem">
+                    <div style="display:flex;align-items:center;justify-content:center;gap:.2rem">
+                      <span style="font-size:.65rem;color:var(--chalk-dim);width:30px">Mise</span>
+                      <input type="number" min="0" max="${m.cards}" value="${d.mise}"
+                        style="width:45px;background:var(--surface);border:1px solid var(--border);border-radius:.3rem;padding:.25rem;color:var(--chalk);font-size:.85rem;text-align:center;outline:none"
+                        onchange="updateSK(${mi},'${p.id}','mise',+this.value)">
+                    </div>
+                    <div style="display:flex;align-items:center;justify-content:center;gap:.2rem">
+                      <span style="font-size:.65rem;color:var(--chalk-dim);width:30px">Plis</span>
+                      <input type="number" min="0" max="${m.cards}" value="${d.plis}"
+                        style="width:45px;background:var(--surface);border:1px solid var(--border);border-radius:.3rem;padding:.25rem;color:var(--chalk);font-size:.85rem;text-align:center;outline:none"
+                        onchange="updateSK(${mi},'${p.id}','plis',+this.value)">
+                    </div>
+                    <div style="display:flex;align-items:center;justify-content:center;gap:.2rem">
+                      <span style="font-size:.65rem;color:var(--chalk-dim);width:30px">Bonus</span>
+                      <input type="number" min="0" value="${d.bonus}"
+                        style="width:45px;background:var(--surface);border:1px solid var(--border);border-radius:.3rem;padding:.25rem;color:var(--gold);font-size:.85rem;text-align:center;outline:none"
+                        onchange="updateSK(${mi},'${p.id}','bonus',+this.value)">
+                    </div>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+}
+
+function updateSK(mancheIdx, playerId, field, value) {
+  state.session.data.manches[mancheIdx].players[playerId][field] = Math.max(0, value);
+  updateSkullKing();
+}
+
+function computeSkullKingResult() {
+  const { players, data } = state.session;
+  const totaux = Object.fromEntries(players.map(p => [p.id, 0]));
+  data.manches.forEach(m => {
+    players.forEach(p => {
+      const d = m.players[p.id];
+      totaux[p.id] += skullKingPoints(d.mise, d.plis, d.bonus, m.cards);
+    });
+  });
+  return players.map(p => ({
+    ...p,
+    total: totaux[p.id],
+    details: data.manches.map((m, i) => {
+      const d = m.players[p.id];
+      const pts = skullKingPoints(d.mise, d.plis, d.bonus, m.cards);
+      return `M${i+1}: mise ${d.mise}/${d.plis} → ${pts>0?'+':''}${pts}`;
+    }).join('\n')
+  })).sort((a, b) => b.total - a.total);
+}
+
+function finishSkullKing() {
+  showResults(computeSkullKingResult());
+}
+
+// ============================================================
+//  AGRICOLA
+// ============================================================
+const AGRICOLA_CATEGORIES = [
+  {
+    section: 'Ferme',
+    items: [
+      { id: 'champs', label: 'Champs', desc: '0-1 → -1pt | 2 → 1pt | 3 → 2pts | 4 → 3pts | 5+ → 4pts', min: -1, max: 4 },
+      { id: 'paturages', label: 'Pâturages', desc: '0 → -1pt | 1 → 1pt | 2 → 2pts | 3 → 3pts | 4+ → 4pts', min: -1, max: 4 },
+      { id: 'stables', label: 'Étables clôturées', desc: '1 pt par étable clôturée', min: 0, max: 99 },
+      { id: 'cases_inutilisees', label: 'Cases inutilisées', desc: '-1 pt par case vide non clôturée', min: -15, max: 0, isNeg: true },
+    ]
+  },
+  {
+    section: 'Récoltes',
+    items: [
+      { id: 'cereales', label: 'Céréales', desc: '0 → -1pt | 1-3 → 1pt | 4-5 → 2pts | 6-7 → 3pts | 8+ → 4pts', min: -1, max: 4 },
+      { id: 'legumes', label: 'Légumes', desc: '0 → -1pt | 1 → 1pt | 2 → 2pts | 3 → 3pts | 4+ → 4pts', min: -1, max: 4 },
+    ]
+  },
+  {
+    section: 'Bétail',
+    items: [
+      { id: 'moutons', label: 'Moutons', desc: '0 → -1pt | 1-3 → 1pt | 4-5 → 2pts | 6-7 → 3pts | 8+ → 4pts', min: -1, max: 4 },
+      { id: 'sangliers', label: 'Sangliers', desc: '0 → -1pt | 1-2 → 1pt | 3-4 → 2pts | 5-6 → 3pts | 7+ → 4pts', min: -1, max: 4 },
+      { id: 'boeufs', label: 'Bœufs', desc: '0 → -1pt | 1 → 1pt | 2-3 → 2pts | 4-5 → 3pts | 6+ → 4pts', min: -1, max: 4 },
+    ]
+  },
+  {
+    section: 'Habitation & Famille',
+    items: [
+      { id: 'habitation', label: 'Habitation', desc: '0pt cabane bois | 1pt/pièce argile | 2pts/pièce pierre', min: 0, max: 20 },
+      { id: 'membres', label: 'Membres de la famille', desc: '3 pts par membre (2 à 5)', min: 6, max: 15 },
+    ]
+  },
+  {
+    section: 'Cartes & Bonus',
+    items: [
+      { id: 'amenagements', label: 'Aménagements (majeurs/mineurs)', desc: 'Points indiqués sur les cartes', min: -10, max: 30 },
+      { id: 'mendicite', label: 'Mendicité', desc: '-3 pts par carte de mendicité', min: -15, max: 0, isNeg: true },
+      { id: 'pts_speciaux', label: 'Points spéciaux', desc: 'Savoir-faire et bonus divers', min: 0, max: 30 },
+    ]
+  }
+];
+
+function renderAgricola() {
+  const { players } = state.session;
+  if (!state.session.data.scores) {
+    state.session.data.scores = Object.fromEntries(
+      players.map(p => [p.id, Object.fromEntries(
+        AGRICOLA_CATEGORIES.flatMap(s => s.items.map(item => [item.id, 0]))
+      )])
+    );
+  }
+
+  const el = document.getElementById('view-game');
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+      <div>
+        <div style="font-family:'Cinzel',serif;font-size:1.2rem;color:var(--gold)">🌾 Agricola</div>
+        <div style="font-size:.75rem;color:var(--chalk-dim)">Décompte final · saisie par catégorie</div>
+      </div>
+      <button class="btn btn-gold btn-sm" onclick="finishAgricola()">Calculer ↗</button>
+    </div>
+    <!-- EN-TÊTES JOUEURS -->
+    <div class="card" style="padding:.75rem 1rem;margin-bottom:.5rem">
+      <div style="display:flex;align-items:center">
+        <div style="flex:1"></div>
+        ${players.map(p => `<div style="width:80px;text-align:center;font-size:.72rem;color:var(--chalk-dim)">${p.emoji}<br>${p.name.split(' ')[0]}</div>`).join('')}
+      </div>
+    </div>
+    <!-- CATÉGORIES -->
+    ${AGRICOLA_CATEGORIES.map(section => `
+      <div class="card" style="padding:.75rem 1rem;margin-bottom:.6rem">
+        <div class="score-section-title">${section.section}</div>
+        ${section.items.map(item => `
+          <div class="score-row" style="gap:.5rem">
+            <div class="score-label" style="flex:1">
+              ${item.label}
+              <small>${item.desc}</small>
+            </div>
+            ${players.map(p => `
+              <input type="number" class="score-input ${item.isNeg ? 'negative' : ''}"
+                value="${state.session.data.scores[p.id][item.id]}"
+                min="${item.min}" max="${item.max}"
+                onchange="updateAgricolaScore('${p.id}','${item.id}',+this.value)">
+            `).join('')}
+          </div>
+        `).join('')}
+      </div>
+    `).join('')}
+    <!-- TOTAL EN DIRECT -->
+    <div class="card" style="padding:.75rem 1rem;background:var(--card2);border-color:var(--gold-dim)">
+      <div class="score-total-row" style="margin:0;padding:0;border:none">
+        <div class="score-total-label">Total</div>
+        <div class="score-total-values" id="agricola-totals">
+          ${players.map(p => `<div class="score-total-val" id="agr-total-${p.id}">0</div>`).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+  updateAgricolaTotals();
+}
+
+function updateAgricolaScore(playerId, catId, value) {
+  state.session.data.scores[playerId][catId] = value;
+  updateAgricolaTotals();
+}
+
+function updateAgricolaTotals() {
+  const { players, data } = state.session;
+  players.forEach(p => {
+    const total = Object.values(data.scores[p.id]).reduce((a, b) => a + (+b || 0), 0);
+    const el = document.getElementById('agr-total-' + p.id);
+    if (el) el.textContent = total;
+  });
+}
+
+function computeAgricolaResult() {
+  const { players, data } = state.session;
+  return players.map(p => {
+    const total = Object.values(data.scores[p.id]).reduce((a, b) => a + (+b || 0), 0);
+    const details = AGRICOLA_CATEGORIES.flatMap(s => s.items.map(item => {
+      const v = data.scores[p.id][item.id];
+      return v !== 0 ? `${item.label}: ${v > 0 ? '+' : ''}${v}` : null;
+    })).filter(Boolean).join(', ');
+    return { ...p, total, details };
+  }).sort((a, b) => b.total - a.total);
+}
+
+function finishAgricola() {
+  showResults(computeAgricolaResult());
+}
+
+// ============================================================
+//  RESULTS
+// ============================================================
+function showResults(results) {
+  state.session.results = results;
+  state.session.finished = true;
+
+  // Podium
+  const medals = ['🥇', '🥈', '🥉'];
+  const barClasses = ['p1', 'p2', 'p3', 'pN'];
+  const podiumEl = document.getElementById('podium');
+  
+  // Sort for podium display: 1st in center
+  const display = [...results];
+  if (display.length >= 2) {
+    // Swap 1st and 2nd for visual podium (2nd left, 1st center, 3rd right)
+    if (display.length >= 3) {
+      const [first, second, third, ...rest] = display;
+      podiumEl.innerHTML = [second, first, third, ...rest].slice(0, Math.min(display.length, 4)).map((r, vi) => {
+        const rank = display.indexOf(r);
+        const barClass = barClasses[rank] || 'pN';
+        return `
+          <div class="podium-place">
+            <div class="podium-bar ${barClass}">
+              <div class="podium-medal">${medals[rank] || ''}</div>
+              <div class="podium-score">${r.total}</div>
+            </div>
+            <div class="podium-name">${r.emoji} ${r.name}</div>
+          </div>
+        `;
+      }).join('');
+    } else {
+      podiumEl.innerHTML = display.map((r, rank) => `
+        <div class="podium-place">
+          <div class="podium-bar ${barClasses[rank]}">
+            <div class="podium-medal">${medals[rank] || ''}</div>
+            <div class="podium-score">${r.total}</div>
+          </div>
+          <div class="podium-name">${r.emoji} ${r.name}</div>
+        </div>
+      `).join('');
+    }
+  } else {
+    podiumEl.innerHTML = results.map((r, rank) => `
+      <div class="podium-place">
+        <div class="podium-bar ${barClasses[rank]}">
+          <div class="podium-medal">${medals[rank] || ''}</div>
+          <div class="podium-score">${r.total}</div>
+        </div>
+        <div class="podium-name">${r.emoji} ${r.name}</div>
+      </div>
+    `).join('');
+  }
+
+  // Full results table
+  document.getElementById('full-results-table').innerHTML = `
+    <hr class="divider">
+    ${results.map((r, rank) => `
+      <div style="display:flex;align-items:center;padding:.5rem 0;border-bottom:1px solid rgba(46,66,114,.3)">
+        <span style="font-size:1.1rem;width:2rem">${medals[rank] || (rank + 1) + '.'}</span>
+        <span style="font-size:.85rem;flex:1">${r.emoji} <strong>${r.name}</strong></span>
+        <span style="font-size:1rem;font-weight:700;color:${rank===0?'var(--jade)':'var(--chalk)'}">${r.total} pts</span>
+      </div>
+    `).join('')}
+  `;
+
+  document.getElementById('result-game-name').textContent = state.session.gameEmoji + ' ' + state.session.gameName;
+  document.getElementById('result-date').textContent = new Date().toLocaleDateString('fr-FR');
+  
+  showView('results');
+  
+  // Remove 'results' from nav control (keep it hidden from nav)
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  
+  launchConfetti();
+}
+
+function saveAndFinish() {
+  if (!state.session) return;
+  const session = {
+    ...state.session,
+    savedAt: new Date().toISOString(),
+  };
+  state.sessions.push(session);
+  saveLocal();
+  db.ref(PTG_REF + '/sessions/' + session.id).set(session);
+  showToast('✅ Partie sauvegardée !');
+  state.session = null;
+  selectedGameId = null;
+  sessionPlayers = [];
+  document.querySelectorAll('.game-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById('session-setup').style.display = 'none';
+  setTimeout(() => showView('history'), 800);
+}
+
+// ============================================================
+//  HISTORY
+// ============================================================
+function renderHistoryList() {
+  const el = document.getElementById('history-list');
+  if (!state.sessions.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">📋</div>Aucune partie enregistrée.</div>';
+    return;
+  }
+  const sorted = [...state.sessions].sort((a, b) => new Date(b.savedAt) - new Date(a.savedAt));
+  el.innerHTML = sorted.map(s => {
+    const winner = s.results?.[0];
+    const date = new Date(s.savedAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
+    const players = s.players.map(p => p.name).join(', ');
+    return `
+      <div class="history-item" onclick="showHistoryDetail('${s.id}')">
+        <div style="font-size:1.5rem;margin-right:.75rem">${s.gameEmoji}</div>
+        <div class="history-meta">
+          <div class="history-game">${s.gameName}</div>
+          <div class="history-date">${date} · ${players}</div>
+          ${winner ? `<div class="history-winner">🏆 ${winner.emoji} ${winner.name} · ${winner.total} pts</div>` : ''}
+        </div>
+        <div class="history-arrow">›</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function showHistoryDetail(id) {
+  state.historySelectedId = id;
+  const s = state.sessions.find(x => x.id === id);
+  if (!s) return;
+  const date = new Date(s.savedAt).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  const medals = ['🥇', '🥈', '🥉'];
+  document.getElementById('modal-history-content').innerHTML = `
+    <div style="margin-bottom:.75rem;padding-bottom:.75rem;border-bottom:1px solid var(--border)">
+      <div style="font-size:1.5rem">${s.gameEmoji} ${s.gameName}</div>
+      <div style="font-size:.75rem;color:var(--chalk-dim)">${date}</div>
+    </div>
+    ${s.results ? s.results.map((r, rank) => `
+      <div style="display:flex;align-items:center;padding:.45rem 0;border-bottom:1px solid rgba(46,66,114,.3)">
+        <span style="font-size:1.1rem;width:2rem">${medals[rank] || (rank+1)+'.'}</span>
+        <span style="flex:1">${r.emoji} ${r.name}</span>
+        <strong style="color:${rank===0?'var(--jade)':'var(--chalk)'}">${r.total} pts</strong>
+      </div>
+    `).join('') : '<div style="color:var(--chalk-dim)">Aucun résultat disponible</div>'}
+  `;
+  document.getElementById('modal-history-detail').classList.add('open');
+}
+
+function deleteHistoryItem() {
+  if (!state.historySelectedId) return;
+  if (!confirm('Supprimer cette partie ?')) return;
+  state.sessions = state.sessions.filter(s => s.id !== state.historySelectedId);
+  saveLocal();
+  db.ref(PTG_REF + '/sessions/' + state.historySelectedId).remove();
+  closeModal('modal-history-detail');
+  renderHistoryList();
+  showToast('🗑️ Partie supprimée');
+}
+
+// ============================================================
+//  STATS
+// ============================================================
+function renderStats() {
+  const statsGrid = document.getElementById('stats-grid');
+  const statsDetails = document.getElementById('stats-details');
+  
+  const totalGames = state.sessions.length;
+  const uniqueGames = new Set(state.sessions.map(s => s.gameId)).size;
+  const totalPlayers = state.players.length;
+  
+  statsGrid.innerHTML = `
+    <div class="stat-card">
+      <div class="stat-value">${totalGames}</div>
+      <div class="stat-label">Parties jouées</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">${uniqueGames}</div>
+      <div class="stat-label">Jeux différents</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">${totalPlayers}</div>
+      <div class="stat-label">Joueurs PTG</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">${totalGames > 0 ? Math.round(totalGames / Math.max(1, uniqueGames)) : 0}</div>
+      <div class="stat-label">Parties/jeu moy.</div>
+    </div>
+  `;
+
+  // Palmarès par joueur
+  const wins = {};
+  state.players.forEach(p => { wins[p.id] = { player: p, wins: 0, games: 0 }; });
+  state.sessions.forEach(s => {
+    s.players?.forEach(p => { if (wins[p.id]) wins[p.id].games++; });
+    if (s.results?.[0]) {
+      const winnerId = s.results[0].id;
+      if (wins[winnerId]) wins[winnerId].wins++;
+    }
+  });
+  
+  const leaderboard = Object.values(wins).filter(w => w.games > 0).sort((a, b) => b.wins - a.wins);
+  
+  statsDetails.innerHTML = leaderboard.length ? `
+    <p class="section-label" style="margin-top:.5rem">Palmarès</p>
+    <div class="card">
+      ${leaderboard.map((w, i) => `
+        <div style="display:flex;align-items:center;padding:.5rem 0;border-bottom:1px solid rgba(46,66,114,.3)">
+          <span style="width:1.5rem;font-size:.85rem;color:var(--chalk-dim)">${i+1}.</span>
+          <span style="flex:1;font-size:.88rem">${w.player.emoji} ${w.player.name}</span>
+          <span style="color:var(--gold);font-weight:700;font-size:.9rem">🏆 ${w.wins}</span>
+          <span style="color:var(--chalk-dim);font-size:.8rem;margin-left:.75rem">${w.games} parties</span>
+        </div>
+      `).join('')}
+    </div>
+  ` : '<div class="empty"><div class="empty-icon">📊</div>Jouez quelques parties pour voir les stats !</div>';
+}
+
+// ============================================================
+//  MODAL
+// ============================================================
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay) overlay.classList.remove('open');
+  });
+});
+
+// ============================================================
+//  TOAST
+// ============================================================
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+// ============================================================
+//  CONFETTI
+// ============================================================
+function launchConfetti() {
+  const colors = ['var(--gold)', 'var(--jade)', 'var(--red)', 'var(--chalk)'];
+  for (let i = 0; i < 20; i++) {
+    setTimeout(() => {
+      const piece = document.createElement('div');
+      piece.className = 'confetti-piece';
+      piece.style.cssText = `
+        left: ${Math.random() * 100}vw;
+        top: ${Math.random() * 30}vh;
+        background: ${colors[Math.floor(Math.random() * colors.length)]};
+        transform: rotate(${Math.random() * 360}deg);
+        animation-delay: ${Math.random() * .5}s;
+        animation-duration: ${.6 + Math.random() * .6}s;
+      `;
+      document.body.appendChild(piece);
+      setTimeout(() => piece.remove(), 1500);
+    }, i * 50);
+  }
+}
+
+// ============================================================
+//  INIT
+// ============================================================
+init();
+</script>
+</body>
+</html>
