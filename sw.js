@@ -1,10 +1,10 @@
 const CACHE = 'ptg-games-v1';
 const ASSETS = [
-  '/BoardGames/',
-  '/BoardGames/index.html',
-  '/BoardGames/manifest.json',
-  '/BoardGames/icon-192.png',
-  '/BoardGames/icon-512.png'
+  '/PTG-Board-Game/',
+  '/PTG-Board-Game/index.html',
+  '/PTG-Board-Game/manifest.json',
+  '/PTG-Board-Game/icon-192.png',
+  '/PTG-Board-Game/icon-512.png'
 ];
 
 self.addEventListener('install', e => {
@@ -20,7 +20,7 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   e.respondWith(
     caches.match(e.request).then(cached => {
-      return cached || fetch(e.request).catch(() => caches.match('/BoardGames/index.html'));
+      return cached || fetch(e.request).catch(() => caches.match('/PTG-Board-Game/index.html'));
     })
   );
 });

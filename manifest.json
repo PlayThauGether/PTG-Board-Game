@@ -2,7 +2,7 @@
   "name": "PTG · Board Games",
   "short_name": "PTG Games",
   "description": "Compteur de scores pour jeux de société PTG",
-  "start_url": "/BoardGames/",
+  "start_url": "/PTG-Board-Game/",
   "display": "standalone",
   "background_color": "#0d1117",
   "theme_color": "#0d1117",
