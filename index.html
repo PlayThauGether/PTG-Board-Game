@@ -138,6 +138,7 @@ body::before {
 .game-emoji { display: none; }
 .game-name { font-size: 15px; font-weight: 700; color: #fff; letter-spacing: -.01em; }
 .game-desc { font-size: 9px; color: rgba(255,255,255,.55); margin-top: 3px; }
+.game-max { font-size: 9px; color: rgba(255,255,255,.35); margin-top: 2px; }
 
 /* ---- PLAYER QUICK-ADD ---- */
 .quick-players { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 10px; }
@@ -420,6 +421,54 @@ body::before {
 .manche-summary-num { font-size: 13px; font-weight: 700; color: var(--accent); min-width: 60px; }
 .manche-summary-scores { flex: 1; font-size: 12px; color: var(--text-2); }
 
+/* ---- COMPTEUR ---- */
+.counter-card {
+  background: var(--glass); border: 1px solid var(--border);
+  border-radius: var(--r-lg); overflow: hidden;
+  margin-bottom: 10px;
+}
+.counter-header {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 14px 8px;
+}
+.counter-color-dot {
+  width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; cursor: pointer;
+  border: 2px solid rgba(255,255,255,.2);
+}
+.counter-name-input {
+  flex: 1; background: none; border: none; outline: none;
+  font-family: inherit; font-size: 15px; font-weight: 600; color: var(--text);
+  min-width: 0;
+}
+.counter-name-input::placeholder { color: var(--text-3); }
+.counter-rm { background: none; border: none; cursor: pointer; color: var(--text-3); font-size: 18px; padding: 0; transition: color .15s; }
+.counter-rm:hover { color: var(--red); }
+.counter-body {
+  display: flex; align-items: center;
+  padding: 6px 14px 14px; gap: 10px;
+}
+.counter-btn {
+  width: 52px; height: 52px; border-radius: 50%;
+  border: none; cursor: pointer; font-size: 26px; font-weight: 300;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text); transition: all .15s; flex-shrink: 0;
+  line-height: 1;
+}
+.counter-btn-minus { background: rgba(255,69,58,.15); border: 1px solid rgba(255,69,58,.3); color: var(--red); }
+.counter-btn-minus:hover { background: rgba(255,69,58,.3); }
+.counter-btn-plus { background: rgba(48,209,88,.15); border: 1px solid rgba(48,209,88,.3); color: var(--green); }
+.counter-btn-plus:hover { background: rgba(48,209,88,.3); }
+.counter-score-wrap { flex: 1; text-align: center; }
+.counter-score {
+  font-size: 48px; font-weight: 700; line-height: 1;
+  color: var(--text); letter-spacing: -.03em;
+  background: none; border: none; outline: none;
+  width: 100%; text-align: center; font-family: inherit;
+}
+.counter-score:focus { color: var(--accent); }
+.counter-reset { font-size: 11px; color: var(--text-3); margin-top: 4px; cursor: pointer; background: none; border: none; font-family: inherit; }
+.counter-reset:hover { color: var(--text-2); }
+
 /* ---- ADMIN ---- */
 .admin-game-row { display:flex;flex-direction:column;gap:6px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.08); }
 .admin-game-row:last-child { border-bottom:none; }
@@ -456,6 +505,9 @@ body::before {
       </button>
       <button class="nav-tab" onclick="showView('stats')">
         <span class="ti">📊</span><span>Stats</span>
+      </button>
+      <button class="nav-tab" onclick="showView('counter')">
+        <span class="ti">🔢</span><span>Compteur</span>
       </button>
     </div>
   </nav>
@@ -516,6 +568,22 @@ body::before {
       <div class="stats-grid" id="stats-grid"></div>
       <div class="section-title">Palmarès</div>
       <div class="card" id="palmares"></div>
+    </section>
+
+    <!-- COMPTEUR BASIQUE -->
+    <section class="view" id="view-counter">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+        <div class="section-title" style="margin:0">Compteur de points</div>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-glass btn-sm" onclick="addCounter()" style="font-size:12px">+ Joueur</button>
+          <button class="btn btn-danger btn-sm" onclick="resetAllCounters()" style="font-size:12px">↺ Reset</button>
+        </div>
+      </div>
+      <div id="counter-list"></div>
+      <div id="counter-empty" style="display:none" class="card" style="text-align:center;padding:2rem">
+        <div style="font-size:2rem;margin-bottom:.5rem">🔢</div>
+        <div style="color:var(--text-2);font-size:.9rem">Appuie sur + Joueur pour commencer</div>
+      </div>
     </section>
 
   </main>
@@ -599,11 +667,11 @@ const REF = 'ptg_boardgames';
 //  GAMES
 // ============================================================
 const GAMES = {
-  flip7:      { id:'flip7',      name:'Flip 7',     emoji:'🃏', desc:'Stop ou encore · 200 pts',
+  flip7:      { id:'flip7',      name:'Flip 7',     emoji:'🃏', desc:'Stop ou encore · 200 pts', maxPlayers: 18,
     img:'https://catchupgames.com/wp-content/uploads/2022/10/vq1w6Btk.jpg' },
-  skull_king: { id:'skull_king', name:'Skull King', emoji:'💀', desc:'Jeu de plis · 10 manches',
+  skull_king: { id:'skull_king', name:'Skull King', emoji:'💀', desc:'Jeu de plis · 10 manches', maxPlayers: 8,
     img:'https://www.grandpabecksgames.com/cdn/shop/files/SK_Main_1200x1200.jpg?v=1780682436' },
-  agricola:   { id:'agricola',   name:'Agricola',   emoji:'🌾', desc:'Décompte final',
+  agricola:   { id:'agricola',   name:'Agricola',   emoji:'🌾', desc:'Décompte final', maxPlayers: 5,
     img:'https://cf.geekdo-images.com/saRfGEGSPFHzMtDsECf6xg__opengraph/img/HXClHNWjSWuCJLyLrXYiHJTSbEk=/fit-in/1200x630/filters:strip_icc()/pic6137663.jpg' }
 };
 
@@ -649,6 +717,7 @@ let selectedSessId = null;
 // ============================================================
 function init() {
   try { sessions = JSON.parse(localStorage.getItem('ptg_sessions') || '[]'); } catch(e) {}
+  loadCounters();
   db.ref(REF+'/sessions').on('value', snap => {
     const d = snap.val();
     if (d) {
@@ -672,6 +741,7 @@ function showView(name) {
   if (idx != null) document.querySelectorAll('.nav-tab')[idx].classList.add('active');
   if (name === 'history') renderHistory();
   if (name === 'stats')   renderStats();
+  if (name === 'counter') renderCounters();
 }
 
 // ============================================================
@@ -686,6 +756,7 @@ function renderGameGrid() {
       <div class="game-card-content">
         <div class="game-name">${g.name}</div>
         <div class="game-desc">${g.desc}</div>
+        <div class="game-max">max ${g.maxPlayers} joueurs</div>
       </div>
     </div>`;
   }).join('');
@@ -711,7 +782,8 @@ function addQuickPlayer() {
   const name = inp.value.trim();
   if (!name) return;
   if (quickPlayers.find(p => p.name.toLowerCase() === name.toLowerCase())) return toast('Déjà dans la partie');
-  if (quickPlayers.length >= 8) return toast('Maximum 8 joueurs');
+  const maxP = (selectedGameId && GAMES[selectedGameId]) ? GAMES[selectedGameId].maxPlayers : 8;
+  if (quickPlayers.length >= maxP) return toast(`Maximum ${maxP} joueurs pour ce jeu`);
   quickPlayers.push({ name, emoji: EMOJIS[quickPlayers.length % EMOJIS.length] });
   inp.value = '';
   inp.focus();
@@ -1377,6 +1449,108 @@ function launchConfetti() {
     c.style.cssText = `left:${Math.random() * 100}vw;top:${20 + Math.random() * 20}vh;background:${cols[Math.floor(Math.random() * cols.length)]};transform:rotate(${Math.random() * 360}deg);animation-delay:${Math.random() * .5}s;animation-duration:${.7 + Math.random() * .6}s`;
     document.body.appendChild(c); setTimeout(() => c.remove(), 1600);
   }, i * 40);
+}
+
+// ============================================================
+//  COMPTEUR BASIQUE
+// ============================================================
+const COUNTER_COLORS = [
+  '#64D2FF','#30D158','#FF9F0A','#FF453A','#BF5AF2',
+  '#FF6B9D','#00C7BE','#FFD60A','#AC8E68','#636366'
+];
+let counters = [];
+
+function loadCounters() {
+  try { counters = JSON.parse(localStorage.getItem('ptg_counters') || '[]'); } catch(e) { counters = []; }
+}
+function saveCounters() { localStorage.setItem('ptg_counters', JSON.stringify(counters)); }
+
+function addCounter() {
+  const color = COUNTER_COLORS[counters.length % COUNTER_COLORS.length];
+  counters.push({ id: Date.now().toString(), name: '', score: 0, color });
+  saveCounters();
+  renderCounters();
+  // Focus sur le champ nom du nouveau joueur
+  setTimeout(() => {
+    const inputs = document.querySelectorAll('.counter-name-input');
+    if (inputs.length) inputs[inputs.length - 1].focus();
+  }, 50);
+}
+
+function removeCounter(id) {
+  counters = counters.filter(c => c.id !== id);
+  saveCounters();
+  renderCounters();
+}
+
+function updateCounterName(id, val) {
+  const c = counters.find(c => c.id === id);
+  if (c) { c.name = val; saveCounters(); }
+}
+
+function changeScore(id, delta) {
+  const c = counters.find(c => c.id === id);
+  if (c) { c.score += delta; saveCounters(); renderCounters(); }
+}
+
+function setScore(id, val) {
+  const c = counters.find(c => c.id === id);
+  if (c) { c.score = parseInt(val) || 0; saveCounters(); }
+}
+
+function resetCounter(id) {
+  const c = counters.find(c => c.id === id);
+  if (c) { c.score = 0; saveCounters(); renderCounters(); }
+}
+
+function resetAllCounters() {
+  if (!confirm('Remettre tous les scores à 0 ?')) return;
+  counters.forEach(c => c.score = 0);
+  saveCounters();
+  renderCounters();
+}
+
+function cycleColor(id) {
+  const c = counters.find(c => c.id === id);
+  if (!c) return;
+  const idx = COUNTER_COLORS.indexOf(c.color);
+  c.color = COUNTER_COLORS[(idx + 1) % COUNTER_COLORS.length];
+  saveCounters();
+  renderCounters();
+}
+
+function renderCounters() {
+  const list = document.getElementById('counter-list');
+  const empty = document.getElementById('counter-empty');
+  if (!counters.length) {
+    list.innerHTML = '';
+    if (empty) empty.style.display = 'block';
+    return;
+  }
+  if (empty) empty.style.display = 'none';
+  list.innerHTML = counters.map(c => `
+    <div class="counter-card" id="cc-${c.id}">
+      <div class="counter-header">
+        <div class="counter-color-dot" style="background:${c.color}" onclick="cycleColor('${c.id}')" title="Changer la couleur"></div>
+        <input class="counter-name-input" placeholder="Nom du joueur..."
+          value="${c.name}"
+          onchange="updateCounterName('${c.id}', this.value)"
+          oninput="updateCounterName('${c.id}', this.value)">
+        <button class="counter-rm" onclick="removeCounter('${c.id}')">×</button>
+      </div>
+      <div class="counter-body">
+        <button class="counter-btn counter-btn-minus" onclick="changeScore('${c.id}', -1)">−</button>
+        <div class="counter-score-wrap">
+          <input type="text" inputmode="numeric" class="counter-score" style="color:${c.color}"
+            value="${c.score}"
+            onchange="setScore('${c.id}', this.value); renderCounters()"
+            oninput="setScore('${c.id}', this.value)">
+          <button class="counter-reset" onclick="resetCounter('${c.id}')">↺ reset</button>
+        </div>
+        <button class="counter-btn counter-btn-plus" onclick="changeScore('${c.id}', +1)">+</button>
+      </div>
+    </div>
+  `).join('');
 }
 
 // ============================================================
