@@ -3265,11 +3265,11 @@ function launchSimplePodium(results) {
       ${results.map((r, rank) => {
         const rankCls   = rankClasses[rank] || 'other';
         const rankLabel = rankLabels[rank]  || (rank+1)+'.';
-        return \`<div class="reveal-card\${rank===0?' first':''}" id="sp-card-\${rank}" style="opacity:0;transform:translateY(20px)">
+        return `<div class="reveal-card\${rank===0?' first':''}" id="sp-card-\${rank}" style="opacity:0;transform:translateY(20px)">
           <div class="reveal-rank \${rankCls}">\${rankLabel}</div>
           <div class="reveal-name">\${r.name}</div>
           <div class="reveal-score" id="sp-score-\${rank}">\${r.total}</div>
-        </div>\`;
+        </div>`;
       }).join('')}
     </div>
     <div class="reveal-buttons" id="sp-btns" style="max-width:420px;opacity:0;transition:opacity .5s">
@@ -3324,11 +3324,11 @@ function launchReveal(results) {
         const rank = results.indexOf(r);
         const rankCls   = rankClasses[rank] || 'other';
         const rankLabel = (rank + 1) + '.';
-        return \`<div class="reveal-card" id="rev-card-\${rank}">
+        return `<div class="reveal-card" id="rev-card-\${rank}">
           <div class="reveal-rank \${rankCls}">\${rankLabel}</div>
           <div class="reveal-name">\${r.name}</div>
           <div class="reveal-score counting" id="rev-score-\${rank}">0</div>
-        </div>\`;
+        </div>`;
       }).join('')}
     </div>
 
@@ -3341,11 +3341,11 @@ function launchReveal(results) {
           const rank = results.indexOf(r);
           const rankCls   = rankClasses[rank] || 'other';
           const rankLabel = rankLabels[rank] || '';
-          return \`<div class="reveal-card\${rank===0?' first':''}" id="rev-pod-\${rank}" style="opacity:0;transform:translateY(30px)">
+          return `<div class="reveal-card\${rank===0?' first':''}" id="rev-pod-\${rank}" style="opacity:0;transform:translateY(30px)">
             <div class="reveal-rank \${rankCls}">\${rankLabel}</div>
             <div class="reveal-name" style="font-size:\${rank===0?'22px':'18px'}">\${r.name}</div>
             <div class="reveal-score counting" id="rev-pod-score-\${rank}">0</div>
-          </div>\`;
+          </div>`;
         }).join('')}
       </div>
       <div class="reveal-buttons" id="rev-btns" style="max-width:420px">
