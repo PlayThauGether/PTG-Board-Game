@@ -191,12 +191,15 @@ body::before {
 
 /* HERO BANDEAU */
 .game-hero {
-  position: relative; height: 110px; overflow: hidden;
+  position: relative; height: 130px; overflow: hidden;
   margin: 0 0 16px;
   border-radius: var(--r-lg);
   border: 1px solid var(--border);
   background: linear-gradient(135deg, #1a3a6b 0%, #0d1f3c 100%);
 }
+.game-hero.has-banner { height: 160px; }
+.game-hero.has-banner .game-hero-title { display: none; }
+.game-hero.has-banner .game-hero-sub { display: none; }
 .game-hero-bg {
   position: absolute; inset: 0;
   background-size: cover; background-position: center;
@@ -738,15 +741,15 @@ const REF = 'ptg_boardgames';
 // ============================================================
 const GAMES = {
   flip7:      { id:'flip7',      name:'Flip 7',     emoji:'', desc:'Stop ou encore · 200 pts', maxPlayers: 18,
-    img:'https://catchupgames.com/wp-content/uploads/2022/10/vq1w6Btk.jpg' },
+    img:'https://catchupgames.com/wp-content/uploads/2022/10/vq1w6Btk.jpg', img_banner:'' },
   skull_king: { id:'skull_king', name:'Skull King', emoji:'', desc:'Jeu de plis · 10 manches', maxPlayers: 8,
-    img:'https://www.grandpabecksgames.com/cdn/shop/files/SK_Main_1200x1200.jpg?v=1780682436' },
+    img:'https://www.grandpabecksgames.com/cdn/shop/files/SK_Main_1200x1200.jpg?v=1780682436', img_banner:'' },
   agricola:   { id:'agricola',   name:'Agricola',   emoji:'', desc:'Décompte final', maxPlayers: 5,
-    img:'https://cf.geekdo-images.com/saRfGEGSPFHzMtDsECf6xg__opengraph/img/HXClHNWjSWuCJLyLrXYiHJTSbEk=/fit-in/1200x630/filters:strip_icc()/pic6137663.jpg' },
+    img:'https://cf.geekdo-images.com/saRfGEGSPFHzMtDsECf6xg__opengraph/img/HXClHNWjSWuCJLyLrXYiHJTSbEk=/fit-in/1200x630/filters:strip_icc()/pic6137663.jpg', img_banner:'' },
   seven_wonders: { id:'seven_wonders', name:'7 Wonders', emoji:'', desc:'Décompte final · 7 catégories', maxPlayers: 7,
-    img:'' },
+    img:'', img_banner:'' },
   dewan: { id:'dewan', name:'Dewan', emoji:'', desc:'Décompte final · 4 catégories', maxPlayers: 4,
-    img:'' }
+    img:'', img_banner:'' }
 };
 
 // ============================================================
@@ -1021,27 +1024,16 @@ function renderFlip7Manche() {
       <strong>${leaders.map(p => p.name).join(' & ')}</strong> ${leaders.length > 1 ? 'ont' : 'a'} atteint 200 points !
     </div>` : '';
 
-  const gameImg = GAMES['flip7']?.img || '';
   const el = document.getElementById('view-game');
   el.innerHTML = `
     <div class="manche-screen">
-      <!-- HERO -->
-      <div class="game-hero">
-        ${gameImg ? `<div class="game-hero-bg" style="background-image:url('${gameImg}')"></div>` : ''}
-        <div class="game-hero-overlay"></div>
-        <div class="game-hero-content">
-          <div class="game-hero-left">
-            <div class="game-hero-title">Flip 7</div>
-            <div class="game-hero-sub">Objectif 200 pts · ${players.length} joueurs</div>
-          </div>
-          <div class="game-hero-nav">
-            <span class="game-hero-all" onclick="openManchesModal()">Voir tout</span>
-            <button class="game-hero-btn" onclick="prevManche()" ${mancheIdx === 0 ? 'disabled' : ''}>‹</button>
-            <span class="game-hero-num">${mancheIdx + 1}/${totalManches}</span>
-            <button class="game-hero-btn" onclick="nextMancheFlip7()">›</button>
-          </div>
-        </div>
-      </div>
+      ${gameHeroHTML('flip7',
+        'Objectif 200 pts · ' + players.length + ' joueurs',
+        '<span class="game-hero-all" onclick="openManchesModal()">Voir tout</span>' +
+        '<button class="game-hero-btn" onclick="prevManche()"' + (mancheIdx === 0 ? ' disabled' : '') + '>‹</button>' +
+        '<span class="game-hero-num">' + (mancheIdx+1) + '/' + totalManches + '</span>' +
+        '<button class="game-hero-btn" onclick="nextMancheFlip7()">›</button>'
+      )}
 
       ${alertHtml}
 
@@ -1176,27 +1168,16 @@ function renderSkullKingManche() {
   const m = data.manches[mancheIdx];
   const totaux = skTotaux();
 
-  const gameImgSK = GAMES['skull_king']?.img || '';
   const el = document.getElementById('view-game');
   el.innerHTML = `
     <div class="manche-screen">
-      <!-- HERO -->
-      <div class="game-hero">
-        ${gameImgSK ? `<div class="game-hero-bg" style="background-image:url('${gameImgSK}')"></div>` : ''}
-        <div class="game-hero-overlay"></div>
-        <div class="game-hero-content">
-          <div class="game-hero-left">
-            <div class="game-hero-title">Skull King</div>
-            <div class="game-hero-sub">Manche ${m.num} · ${m.cards} carte${m.cards > 1 ? 's' : ''}</div>
-          </div>
-          <div class="game-hero-nav">
-            <span class="game-hero-all" onclick="openManchesModal()">Voir tout</span>
-            <button class="game-hero-btn" onclick="prevManche()" ${mancheIdx === 0 ? 'disabled' : ''}>‹</button>
-            <span class="game-hero-num">${mancheIdx + 1}/10</span>
-            <button class="game-hero-btn" onclick="nextMancheSK()">›</button>
-          </div>
-        </div>
-      </div>
+      ${gameHeroHTML('skull_king',
+        'Manche ' + m.num + ' · ' + m.cards + ' carte' + (m.cards > 1 ? 's' : ''),
+        '<span class="game-hero-all" onclick="openManchesModal()">Voir tout</span>' +
+        '<button class="game-hero-btn" onclick="prevManche()"' + (mancheIdx === 0 ? ' disabled' : '') + '>‹</button>' +
+        '<span class="game-hero-num">' + (mancheIdx+1) + '/10</span>' +
+        '<button class="game-hero-btn" onclick="nextMancheSK()">›</button>'
+      )}
 
       <!-- PLAYER CARDS -->
       ${players.map(p => {
@@ -1268,18 +1249,8 @@ function renderAgricolaManche() {
   const el = document.getElementById('view-game');
   el.innerHTML = `
     <div class="manche-screen">
-      <!-- HERO -->
-      <div class="game-hero" style="margin-bottom:12px">
-        ${GAMES['agricola']?.img ? `<div class="game-hero-bg" style="background-image:url('${GAMES['agricola'].img}')"></div>` : ''}
-        <div class="game-hero-overlay"></div>
-        <div class="game-hero-content">
-          <div class="game-hero-left">
-            <div class="game-hero-title">Agricola</div>
-            <div class="game-hero-sub">Saisis les quantités — les pts sont calculés</div>
-          </div>
-          <button class="btn btn-primary btn-sm" onclick="finishGame('agricola')" style="margin-bottom:2px">Résultats →</button>
-        </div>
-      </div>
+      ${gameHeroHTML('agricola', 'Saisis les quantités — les pts sont calculés',
+        '<button class="btn btn-primary btn-sm" onclick="finishGame(\'agricola\')">Résultats →</button>')}
 
       <!-- en-têtes joueurs -->
       <div style="display:flex;margin:0 0 4px;padding:0 0 0 0">
@@ -1405,18 +1376,8 @@ function renderSevenWondersManche() {
 
   el.innerHTML = `
     <div class="manche-screen">
-      <!-- HERO -->
-      <div class="game-hero" style="margin-bottom:12px">
-        ${GAMES['seven_wonders']?.img ? `<div class="game-hero-bg" style="background-image:url('${GAMES['seven_wonders'].img}')"></div>` : ''}
-        <div class="game-hero-overlay"></div>
-        <div class="game-hero-content">
-          <div class="game-hero-left">
-            <div class="game-hero-title">7 Wonders</div>
-            <div class="game-hero-sub">Saisis les valeurs — les pts sont calculés</div>
-          </div>
-          <button class="btn btn-primary btn-sm" onclick="finishGame('seven_wonders')" style="margin-bottom:2px">Résultats →</button>
-        </div>
-      </div>
+      ${gameHeroHTML('seven_wonders', 'Saisis les valeurs — les pts sont calculés',
+        '<button class="btn btn-primary btn-sm" onclick="finishGame(\'seven_wonders\')">Résultats →</button>')}
 
       <!-- totaux live -->
       <div class="totals-bar">
@@ -1638,6 +1599,29 @@ function updateSW(pid, field, val) {
 }
 
 // ============================================================
+//  HELPER — génère le HTML du hero bandeau
+// ============================================================
+function gameHeroHTML(gameId, subtitle, navHTML) {
+  const g = GAMES[gameId];
+  const banner = g?.img_banner || '';
+  const thumb  = g?.img || '';
+  const hasBanner = !!banner;
+  const bgSrc  = banner || thumb;
+  return `
+    <div class="game-hero${hasBanner ? ' has-banner' : ''}" style="margin-bottom:12px">
+      ${bgSrc ? `<div class="game-hero-bg" style="background-image:url('${bgSrc}');filter:${hasBanner ? 'brightness(.75)' : 'blur(8px) brightness(.35) saturate(1.5)'}"></div>` : ''}
+      <div class="game-hero-overlay" style="${hasBanner ? 'background:linear-gradient(to bottom, rgba(0,0,0,.05) 0%, rgba(0,0,0,.55) 100%)' : ''}"></div>
+      <div class="game-hero-content">
+        <div class="game-hero-left">
+          <div class="game-hero-title">${g?.name || ''}</div>
+          <div class="game-hero-sub">${subtitle}</div>
+        </div>
+        <div class="game-hero-nav">${navHTML}</div>
+      </div>
+    </div>`;
+}
+
+// ============================================================
 //  DEWAN
 // ============================================================
 function initDewan() {
@@ -1709,18 +1693,8 @@ function renderDewanManche() {
 
   el.innerHTML = `
     <div class="manche-screen">
-      <!-- HERO -->
-      <div class="game-hero" style="margin-bottom:12px">
-        ${GAMES['dewan']?.img ? `<div class="game-hero-bg" style="background-image:url('${GAMES['dewan'].img}')"></div>` : ''}
-        <div class="game-hero-overlay"></div>
-        <div class="game-hero-content">
-          <div class="game-hero-left">
-            <div class="game-hero-title">Dewan</div>
-            <div class="game-hero-sub">Décompte final · ${players.length} joueurs</div>
-          </div>
-          <button class="btn btn-primary btn-sm" onclick="finishGame('dewan')" style="margin-bottom:2px">Résultats →</button>
-        </div>
-      </div>
+      ${gameHeroHTML('dewan', 'Décompte final · ' + players.length + ' joueurs',
+        '<button class="btn btn-primary btn-sm" onclick="finishGame(\'dewan\')">Résultats →</button>')}
 
       <!-- TOTAUX LIVE -->
       <div class="totals-bar">
@@ -2295,19 +2269,27 @@ function renderAdminPanel() {
   db.ref(REF + '/game_images').once('value', snap => {
     const images = snap.val() || {};
     document.getElementById('admin-games-list').innerHTML = Object.values(GAMES).map(g => {
-      const currentImg = images[g.id] || g.img || '';
+      const currentImg    = images[g.id] || g.img || '';
+      const currentBanner = images[g.id + '_banner'] || g.img_banner || '';
       const preview = currentImg
         ? `<img class="admin-img-preview" src="${currentImg}" onerror="this.style.display='none'">`
-        : `<div class="admin-img-placeholder">${g.emoji}</div>`;
+        : `<div class="admin-img-placeholder">${g.name.charAt(0)}</div>`;
       return `<div class="admin-game-row">
         <div class="admin-game-name">${g.name}</div>
         <div class="admin-row-inner">
           ${preview}
-          <input class="field" style="flex:1;font-size:13px;padding:8px 12px"
-            placeholder="URL de l'image..."
-            value="${currentImg}"
-            id="admin-img-${g.id}"
-            onchange="saveGameImage('${g.id}', this.value)">
+          <div style="flex:1;display:flex;flex-direction:column;gap:6px">
+            <input class="field" style="font-size:12px;padding:7px 12px"
+              placeholder="URL image vignette (game card)..."
+              value="${currentImg}"
+              id="admin-img-${g.id}"
+              onchange="saveGameImage('${g.id}', this.value)">
+            <input class="field" style="font-size:12px;padding:7px 12px"
+              placeholder="URL image bannière (écran de score)..."
+              value="${currentBanner}"
+              id="admin-banner-${g.id}"
+              onchange="saveGameBanner('${g.id}', this.value)">
+          </div>
         </div>
       </div>`;
     }).join('');
@@ -2320,12 +2302,23 @@ function saveGameImage(gameId, url) {
     .catch(() => toast('Erreur sauvegarde'));
 }
 
+function saveGameBanner(gameId, url) {
+  db.ref(REF + '/game_images/' + gameId + '_banner').set(url.trim())
+    .then(() => { GAMES[gameId].img_banner = url.trim(); toast('Bannière sauvegardée !'); })
+    .catch(() => toast('Erreur sauvegarde'));
+}
+
 // Charger les images depuis Firebase au démarrage
 function loadGameImages() {
   db.ref(REF + '/game_images').on('value', snap => {
     const imgs = snap.val() || {};
-    Object.keys(imgs).forEach(id => {
-      if (GAMES[id]) GAMES[id].img = imgs[id];
+    Object.keys(imgs).forEach(key => {
+      if (key.endsWith('_banner')) {
+        const id = key.replace('_banner', '');
+        if (GAMES[id]) GAMES[id].img_banner = imgs[key];
+      } else {
+        if (GAMES[key]) GAMES[key].img = imgs[key];
+      }
     });
     renderGameGrid();
   });
