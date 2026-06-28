@@ -831,6 +831,8 @@ const GAMES_DEF = {
     img:'https://www.grandpabecksgames.com/cdn/shop/files/SK_Main_1200x1200.jpg?v=1780682436', img_banner:'' },
   wingspan:      { id:'wingspan', rules:'https://ludovox.fr/wp-content/uploads/2021/06/RExWingspanFR.pdf',      name:'Wingspan',                   emoji:'', desc:'Décompte final · 4 manches', maxPlayers: 5,
     img:'', img_banner:'' },
+  maraudeurs:    { id:'maraudeurs', rules:'https://www.dontpanicgames.com/static/Maraudeurs-Midgard-regles-vf.pdf', name:'Maraudeurs de Midgard',      emoji:'', desc:'Décompte final · 6 tours', maxPlayers: 4,
+    img:'', img_banner:'' },
 };
 // Tri alphabétique
 const GAMES = Object.fromEntries(
@@ -1063,6 +1065,7 @@ function startGame() {
   if (g.id === 'seven_wonders') initSevenWonders();
   if (g.id === 'dewan')         initDewan();
   if (g.id === 'wingspan')      initWingspan();
+  if (g.id === 'maraudeurs')    initMaraudeurs();
   if (g.id === 'iaww')          initIAWW();
   if (g.id === 'pillards')      initPillards();
   showView('game');
@@ -2428,6 +2431,220 @@ function renderPillardsManche() {
     </div>`;
 }
 
+// ============================================================
+//  MARAUDEURS DE MIDGARD
+// ============================================================
+const TERREUR_TABLE = [0,-1,-3,-6,-10,-15,-21];
+
+function initMaraudeurs() {
+  const fields = ['gloire','artefacts','butin','ferme','mur','bastion','propheties','terreur'];
+  session.data.scores = Object.fromEntries(
+    session.players.map(p => [p.id, Object.fromEntries(fields.map(f => [f,'']))])
+  );
+}
+
+function calcMaraudeur(d) {
+  const gloire     = parseInt(d.gloire)     || 0;
+  const artefacts  = parseInt(d.artefacts)  || 0;
+  const butin      = parseInt(d.butin)      || 0;
+  const ferme      = parseInt(d.ferme)      || 0;
+  const mur        = parseInt(d.mur)        || 0;
+  const bastion    = parseInt(d.bastion)    || 0;
+  const propheties = parseInt(d.propheties) || 0;
+  const terreur    = parseInt(d.terreur)    || 0;
+  const terreurPv  = terreur <= 0 ? 0 : terreur <= 6
+    ? TERREUR_TABLE[terreur]
+    : TERREUR_TABLE[6] - (terreur - 6) * 6;
+  const fermePv    = ferme   <= 0 ? 0 : ferme   <= 3 ? ferme*1   : ferme   <= 5 ? ferme*2   : ferme*3;
+  const murPv      = mur     <= 0 ? 0 : mur     <= 3 ? mur*2     : mur     <= 5 ? mur*3     : mur*4;
+  const bastionPv  = bastion <= 0 ? 0 : bastion <= 3 ? bastion*3 : bastion <= 5 ? bastion*4 : bastion*5;
+  return { gloire, artefacts, butin, ferme, mur, bastion, propheties, terreur,
+           terreurPv, fermePv, murPv, bastionPv,
+           subtotal: gloire + artefacts + butin + fermePv + murPv + bastionPv + propheties + terreurPv };
+}
+
+function maraudeursBonusMajorite(scores) {
+  // Retourne un objet { playerId: bonusPts }
+  const bonus = Object.fromEntries(Object.keys(scores).map(id => [id, 0]));
+  ['ferme','mur','bastion'].forEach((type, ti) => {
+    const bonusPts = [3,4,5][ti];
+    const vals = Object.entries(scores).map(([id,d]) => ({ id, v: parseInt(d[type])||0 }));
+    const max = Math.max(...vals.map(x => x.v));
+    if (max > 0) vals.filter(x => x.v === max).forEach(x => { bonus[x.id] += bonusPts; });
+  });
+  return bonus;
+}
+
+function updateMaraudeurs(field, pid, val) {
+  session.data.scores[pid][field] = val;
+  const { players, data } = session;
+  const bonus = maraudeursBonusMajorite(data.scores);
+  players.forEach(p => {
+    const c = calcMaraudeur(data.scores[p.id]);
+    const total = c.subtotal + (bonus[p.id] || 0);
+    // Update labels
+    const labels = {
+      gloire: c.gloire, artefacts: c.artefacts, butin: c.butin,
+      ferme: c.fermePv, mur: c.murPv, bastion: c.bastionPv,
+      propheties: c.propheties, terreur: c.terreurPv
+    };
+    Object.entries(labels).forEach(([f, v]) => {
+      const el = document.getElementById('mar-pts-' + f + '-' + p.id);
+      if (el) {
+        el.textContent = (v >= 0 ? '+' : '') + v + ' pts';
+        el.style.color = v < 0 ? 'var(--red)' : 'var(--green)';
+      }
+    });
+    // Bonus majorité
+    const bEl = document.getElementById('mar-bonus-' + p.id);
+    if (bEl) bEl.textContent = bonus[p.id] > 0 ? '+' + bonus[p.id] + ' (majorité)' : '';
+    // Total
+    const tEl = document.getElementById('mar-total-' + p.id);
+    const pEl = document.getElementById('mar-pill-' + p.id);
+    if (tEl) tEl.textContent = total;
+    if (pEl) pEl.textContent = total;
+  });
+}
+
+function renderMaraudeursManche() {
+  const { players, data } = session;
+  const bonus = maraudeursBonusMajorite(data.scores);
+  const totals = players.map(p => {
+    const c = calcMaraudeur(data.scores[p.id]);
+    return c.subtotal + (bonus[p.id] || 0);
+  });
+  const el = document.getElementById('view-game');
+  el.innerHTML = `
+    <div class="manche-screen">
+      ${gameHeroHTML('maraudeurs', 'Décompte final · 6 tours',
+        '<button class="btn btn-primary btn-sm" onclick="finishGame(\'maraudeurs\')">Résultats →</button>')}
+
+      <div class="totals-bar">
+        ${players.map((p,i) => `<div class="total-pill">
+          <div class="total-pill-name">${p.name}</div>
+          <div class="total-pill-val" style="color:var(--accent)" id="mar-pill-${p.id}">${totals[i]}</div>
+        </div>`).join('')}
+      </div>
+
+      <!-- En-têtes joueurs -->
+      <div style="display:flex;margin:0 0 6px">
+        <div style="flex:1"></div>
+        <div style="display:flex;gap:6px">
+          ${players.map(p => `<div style="width:72px;text-align:center;font-size:11px;color:var(--text-2);font-weight:500">${p.name}</div>`).join('')}
+        </div>
+      </div>
+
+      <!-- Gloire + Artefacts + Butin + Prophéties -->
+      <div class="card" style="margin-bottom:10px">
+        <div class="agr-section-head">Points de Gloire</div>
+        ${[
+          {id:'gloire',     label:'Gloire accumulée',          hint:'Score sur ta pile de Gloire en fin de partie'},
+          {id:'artefacts',  label:'Artefacts',                 hint:'PV indiqués sur tes cartes Artefact'},
+          {id:'butin',      label:'Butin de Forteresses',      hint:'PV selon tes séries de cartes collectées'},
+          {id:'propheties', label:'Prophéties',                hint:'PV des cartes Prophétie remplies'},
+        ].map(item => `
+          <div class="agr-row">
+            <div class="agr-label">
+              <div class="agr-label-text">${item.label}</div>
+              <div class="agr-label-hint">${item.hint}</div>
+            </div>
+            <div style="display:flex;gap:6px">
+              ${players.map(p => {
+                const v = parseInt(data.scores[p.id][item.id]) || 0;
+                return `<div style="width:72px;display:flex;flex-direction:column;align-items:center;gap:2px">
+                  <input type="text" inputmode="numeric" class="agr-field" style="width:100%"
+                    value="${data.scores[p.id][item.id] || ''}" placeholder="—"
+                    oninput="updateMaraudeurs('${item.id}','${p.id}',this.value)">
+                  <div style="font-size:11px;font-weight:700;color:var(--green)" id="mar-pts-${item.id}-${p.id}">+${v} pts</div>
+                </div>`;
+              }).join('')}
+            </div>
+          </div>`).join('')}
+      </div>
+
+      <!-- Ferme / Mur / Bastion -->
+      <div class="card" style="margin-bottom:10px">
+        <div class="agr-section-head">Pions Ferme / Mur / Bastion</div>
+        <div style="font-size:11px;color:var(--text-2);margin-bottom:8px;padding:0 2px">
+          Ferme: 1-3→1pt | 4-5→2pts | 6+→3pts (+3 au max) ·
+          Mur: 1-3→2pts | 4-5→3pts | 6+→4pts (+4 au max) ·
+          Bastion: 1-3→3pts | 4-5→4pts | 6+→5pts (+5 au max)
+        </div>
+        ${[
+          {id:'ferme',   label:'Pions Ferme'},
+          {id:'mur',     label:'Pions Mur'},
+          {id:'bastion', label:'Pions Bastion'},
+        ].map(item => {
+          const keys = {ferme:'fermePv', mur:'murPv', bastion:'bastionPv'};
+          return `<div class="agr-row">
+            <div class="agr-label"><div class="agr-label-text">${item.label}</div></div>
+            <div style="display:flex;gap:6px">
+              ${players.map(p => {
+                const c = calcMaraudeur(data.scores[p.id]);
+                const v = c[keys[item.id]];
+                return `<div style="width:72px;display:flex;flex-direction:column;align-items:center;gap:2px">
+                  <input type="text" inputmode="numeric" class="agr-field" style="width:100%"
+                    value="${data.scores[p.id][item.id] || ''}" placeholder="—"
+                    oninput="updateMaraudeurs('${item.id}','${p.id}',this.value)">
+                  <div style="font-size:11px;font-weight:700;color:var(--green)" id="mar-pts-${item.id}-${p.id}">+${v} pts</div>
+                </div>`;
+              }).join('')}
+            </div>
+          </div>`;
+        }).join('')}
+        <!-- Bonus majorité -->
+        <div style="display:flex;align-items:center;padding-top:8px;margin-top:4px;border-top:1px solid rgba(255,255,255,.08)">
+          <div style="flex:1;font-size:12px;color:var(--gold);font-weight:600">Bonus majorité</div>
+          <div style="display:flex;gap:6px">
+            ${players.map(p => `<div style="width:72px;text-align:center;font-size:11px;font-weight:700;color:var(--gold)" id="mar-bonus-${p.id}">
+              ${bonus[p.id] > 0 ? '+' + bonus[p.id] + ' (majorité)' : ''}
+            </div>`).join('')}
+          </div>
+        </div>
+      </div>
+
+      <!-- Terreur -->
+      <div class="card" style="margin-bottom:10px">
+        <div class="agr-section-head">Terreur (malus)</div>
+        <div class="agr-row">
+          <div class="agr-label">
+            <div class="agr-label-text">Nombre de pions Terreur</div>
+            <div class="agr-label-hint">1→-1 | 2→-3 | 3→-6 | 4→-10 | 5→-15 | 6→-21 | +1 par pion suppl. : -6 de plus</div>
+          </div>
+          <div style="display:flex;gap:6px">
+            ${players.map(p => {
+              const t = parseInt(data.scores[p.id].terreur) || 0;
+              const tv = t <= 0 ? 0 : t <= 6 ? TERREUR_TABLE[t] : TERREUR_TABLE[6] - (t-6)*6;
+              return `<div style="width:72px;display:flex;flex-direction:column;align-items:center;gap:2px">
+                <input type="text" inputmode="numeric" class="agr-field neg" style="width:100%"
+                  value="${data.scores[p.id].terreur || ''}" placeholder="—"
+                  oninput="updateMaraudeurs('terreur','${p.id}',this.value)">
+                <div style="font-size:11px;font-weight:700;color:var(--red)" id="mar-pts-terreur-${p.id}">${tv} pts</div>
+              </div>`;
+            }).join('')}
+          </div>
+        </div>
+      </div>
+
+      <!-- Total -->
+      <div class="card" style="background:var(--glass-md)">
+        <div style="display:flex;align-items:center">
+          <div style="flex:1;font-size:14px;font-weight:700;color:var(--accent)">Total</div>
+          <div style="display:flex;gap:6px">
+            ${players.map((p,i) => `<div style="width:72px;text-align:center">
+              <div style="font-size:22px;font-weight:700" id="mar-total-${p.id}">${totals[i]}</div>
+              <div style="font-size:10px;color:var(--text-2)">${p.name}</div>
+            </div>`).join('')}
+          </div>
+        </div>
+      </div>
+
+      <div class="manche-footer">
+        <button class="btn btn-primary btn-full" onclick="finishGame('maraudeurs')">Voir les résultats</button>
+      </div>
+    </div>`;
+}
+
 function renderCurrentManche() {
   if (!session) return;
   if (session.gameId === 'flip7')         renderFlip7Manche();
@@ -2436,6 +2653,7 @@ function renderCurrentManche() {
   if (session.gameId === 'seven_wonders') renderSevenWondersManche();
   if (session.gameId === 'dewan')         renderDewanManche();
   if (session.gameId === 'wingspan')      renderWingspanManche();
+  if (session.gameId === 'maraudeurs')    renderMaraudeursManche();
   if (session.gameId === 'iaww')          renderIAWWManche();
   if (session.gameId === 'pillards')      renderPillardsManche();
 }
@@ -2517,6 +2735,40 @@ function finishGame(gameId) {
         return sum + agrScore(item.id, data.scores[p.id][item.id] || 0);
       }, 0)
     })).sort((a, b) => b.total - a.total);
+  }
+
+  if (gameId === 'maraudeurs') {
+    const TERREUR_PV = [0,-1,-3,-6,-10,-15,-21];
+    results = players.map(p => {
+      const d = data.scores[p.id];
+      const gloire    = parseInt(d.gloire)    || 0;
+      const artefacts = parseInt(d.artefacts) || 0;
+      const butin     = parseInt(d.butin)     || 0;
+      const ferme     = parseInt(d.ferme)     || 0;
+      const mur       = parseInt(d.mur)       || 0;
+      const bastion   = parseInt(d.bastion)   || 0;
+      const propheties= parseInt(d.propheties)|| 0;
+      const terreur   = parseInt(d.terreur)   || 0;
+      // Calcul terreur
+      const terreurPv = terreur <= 6
+        ? (TERREUR_PV[terreur] || 0)
+        : TERREUR_PV[6] - (terreur - 6) * 6;
+      // Calcul Ferme
+      const fermePv = ferme === 0 ? 0 : ferme <= 3 ? ferme*1 : ferme <= 5 ? ferme*2 : ferme*3;
+      // Calcul Mur
+      const murPv = mur === 0 ? 0 : mur <= 3 ? mur*2 : mur <= 5 ? mur*3 : mur*4;
+      // Calcul Bastion
+      const bastionPv = bastion === 0 ? 0 : bastion <= 3 ? bastion*3 : bastion <= 5 ? bastion*4 : bastion*5;
+      const total = gloire + artefacts + butin + fermePv + murPv + bastionPv + propheties + terreurPv;
+      return { ...p, total, _ferme:ferme, _mur:mur, _bastion:bastion };
+    });
+    // Bonus majorité Ferme +3, Mur +4, Bastion +5
+    ['ferme','mur','bastion'].forEach((type,ti) => {
+      const bonus = [3,4,5][ti];
+      const max = Math.max(...results.map(r => r['_'+type]));
+      if (max > 0) results.forEach(r => { if (r['_'+type] === max) r.total += bonus; });
+    });
+    results.sort((a,b) => b.total - a.total);
   }
 
   if (gameId === 'wingspan') {
