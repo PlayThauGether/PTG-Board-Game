@@ -188,56 +188,114 @@ body::before {
 
 /* ---- MANCHE SCREEN ---- */
 .manche-screen { }
-.manche-topbar {
-  display: flex; align-items: center; justify-content: space-between;
-  margin-bottom: 16px;
-}
-.manche-title { font-size: 22px; font-weight: 700; letter-spacing: -.02em; }
-.manche-sub { font-size: 13px; color: var(--text-2); margin-top: 1px; }
-.manche-nav {
-  display: flex; align-items: center; gap: 8px;
-}
-.manche-nav-info {
-  font-size: 13px; font-weight: 600; color: var(--text-2);
-  min-width: 48px; text-align: center;
-}
 
-/* SCOREBOARD dans la manche */
-.score-table { display: flex; flex-direction: column; gap: 1px; }
-.score-player-row {
-  display: flex; align-items: center; gap: 10px;
-  padding: 12px 0;
-  border-bottom: 1px solid rgba(255,255,255,.06);
+/* HERO BANDEAU */
+.game-hero {
+  position: relative; height: 110px; overflow: hidden;
+  margin: -20px -20px 16px;
+  background: linear-gradient(135deg, #1a3a6b 0%, #0d1f3c 100%);
 }
-.score-player-row:last-child { border-bottom: none; }
-.player-info { flex: 1; min-width: 0; }
-.player-name { font-size: 15px; font-weight: 600; color: var(--text); }
-.player-cumul { font-size: 12px; color: var(--text-2); margin-top: 1px; }
-.score-controls { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-.btn-circle {
-  width: 32px; height: 32px; border-radius: 50%;
-  background: var(--glass-md); border: 1px solid var(--border);
-  color: var(--text); font-size: 18px; font-weight: 400;
+.game-hero-bg {
+  position: absolute; inset: 0;
+  background-size: cover; background-position: center;
+  filter: blur(8px) brightness(.35) saturate(1.5);
+  transform: scale(1.12);
+}
+.game-hero-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(to bottom, rgba(13,22,41,.2) 0%, rgba(13,22,41,.85) 100%);
+}
+.game-hero-content {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  padding: 12px 20px;
+  display: flex; align-items: flex-end; justify-content: space-between;
+}
+.game-hero-left { }
+.game-hero-title { font-size: 22px; font-weight: 700; color: #fff; letter-spacing: -.02em; }
+.game-hero-sub { font-size: 12px; color: rgba(255,255,255,.55); margin-top: 2px; }
+.game-hero-nav { display: flex; align-items: center; gap: 7px; padding-bottom: 2px; }
+.game-hero-btn {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.2);
+  color: #fff; font-size: 16px;
   display: flex; align-items: center; justify-content: center;
-  cursor: pointer; transition: all .15s; flex-shrink: 0;
-  line-height: 1;
+  cursor: pointer; transition: background .15s; flex-shrink: 0;
+}
+.game-hero-btn:hover { background: rgba(255,255,255,.22); }
+.game-hero-btn:disabled { opacity: .3; cursor: not-allowed; }
+.game-hero-badge {
+  font-size: 11px; font-weight: 600; color: var(--accent);
+  background: rgba(100,210,255,.15); border: 1px solid rgba(100,210,255,.25);
+  border-radius: 20px; padding: 3px 10px; white-space: nowrap;
+}
+.game-hero-num { font-size: 12px; color: rgba(255,255,255,.45); }
+.game-hero-all {
+  font-size: 11px; font-weight: 600; color: rgba(255,255,255,.6);
+  background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.15);
+  border-radius: 8px; padding: 4px 9px; cursor: pointer; transition: background .15s;
+}
+.game-hero-all:hover { background: rgba(255,255,255,.18); }
+
+/* PLAYER CARDS design A */
+.player-card-a {
+  background: var(--glass); border: 1px solid var(--border);
+  border-radius: var(--r-lg); padding: 12px 14px;
+  margin-bottom: 8px;
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  transition: border-color .2s;
+}
+.player-card-a.leader { border-color: rgba(48,209,88,.4); background: rgba(48,209,88,.06); }
+.player-card-a.danger-zone { border-color: rgba(255,214,10,.35); background: rgba(255,214,10,.05); }
+.pca-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.pca-name { font-size: 15px; font-weight: 600; color: var(--text); }
+.pca-total { font-size: 12px; font-weight: 600; color: var(--text-2); }
+.pca-total.leader { color: var(--green); }
+.pca-total.danger-zone { color: var(--gold); }
+.pca-controls { display: flex; align-items: center; gap: 8px; }
+.btn-circle {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: var(--glass-md); border: 1px solid var(--border);
+  color: var(--text); font-size: 20px; font-weight: 300;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: all .15s; flex-shrink: 0; line-height: 1;
 }
 .btn-circle:hover { background: var(--glass-hi); border-color: var(--accent); color: var(--accent); }
 .score-input {
-  width: 64px; text-align: center;
+  flex: 1; text-align: center;
   background: var(--glass); border: 1px solid var(--border);
   border-radius: 12px; padding: 8px 4px;
   color: var(--text); font-family: inherit;
-  font-size: 20px; font-weight: 700;
+  font-size: 22px; font-weight: 700;
   outline: none; transition: border-color .2s;
+  min-width: 0;
 }
 .score-input:focus { border-color: var(--accent); background: var(--glass-md); }
-.score-total-badge {
-  font-size: 13px; font-weight: 700;
-  color: var(--accent); min-width: 44px; text-align: right;
+
+/* SK player card design A */
+.sk-player-card-a {
+  background: var(--glass); border: 1px solid var(--border);
+  border-radius: var(--r-lg); padding: 12px 14px;
+  margin-bottom: 8px;
 }
-.score-total-badge.danger { color: var(--red); }
-.score-total-badge.win { color: var(--green); }
+.sk-pca-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.sk-pca-name { font-size: 15px; font-weight: 600; color: var(--text); }
+.sk-pca-pts { font-size: 14px; font-weight: 700; }
+.sk-pca-pts.pos { color: var(--green); }
+.sk-pca-pts.neg { color: var(--red); }
+.sk-pca-pts.zero { color: var(--text-2); }
+.sk-pca-fields { display: flex; gap: 8px; }
+.sk-pca-field-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.sk-pca-label { font-size: 10px; color: var(--text-3); text-transform: uppercase; letter-spacing: .05em; }
+.sk-pca-input {
+  width: 100%; text-align: center;
+  background: var(--glass); border: 1px solid var(--border);
+  border-radius: 10px; padding: 8px 4px;
+  color: var(--text); font-family: inherit;
+  font-size: 18px; font-weight: 700;
+  outline: none; transition: border-color .2s;
+}
+.sk-pca-input:focus { border-color: var(--accent); }
+.sk-cumul { font-size: 11px; color: var(--text-3); text-align: center; margin-top: 2px; }
 
 /* ---- FLIP7 BONUS BTN ---- */
 .btn-flip-bonus {
@@ -958,67 +1016,54 @@ function renderFlip7Manche() {
       <strong>🏆 ${leaders.map(p => p.name).join(' & ')}</strong> ${leaders.length > 1 ? 'ont' : 'a'} atteint 200 points !
     </div>` : '';
 
+  const gameImg = GAMES['flip7']?.img || '';
   const el = document.getElementById('view-game');
   el.innerHTML = `
     <div class="manche-screen">
-      <!-- top bar -->
-      <div class="manche-topbar">
-        <div>
-          <div class="manche-title">🃏 Flip 7</div>
-          <div class="manche-sub">Manche ${mancheIdx + 1} / ${totalManches}</div>
+      <!-- HERO -->
+      <div class="game-hero">
+        ${gameImg ? `<div class="game-hero-bg" style="background-image:url('${gameImg}')"></div>` : ''}
+        <div class="game-hero-overlay"></div>
+        <div class="game-hero-content">
+          <div class="game-hero-left">
+            <div class="game-hero-title">🃏 Flip 7</div>
+            <div class="game-hero-sub">Objectif 200 pts · ${players.length} joueurs</div>
+          </div>
+          <div class="game-hero-nav">
+            <span class="game-hero-all" onclick="openManchesModal()">Voir tout</span>
+            <button class="game-hero-btn" onclick="prevManche()" ${mancheIdx === 0 ? 'disabled' : ''}>‹</button>
+            <span class="game-hero-num">${mancheIdx + 1}/${totalManches}</span>
+            <button class="game-hero-btn" onclick="nextMancheFlip7()">›</button>
+          </div>
         </div>
-        <div class="manche-nav">
-          <button class="btn btn-glass btn-sm" onclick="openManchesModal()" style="font-size:12px">Voir tout</button>
-          <button class="btn-circle" onclick="prevManche()" ${mancheIdx === 0 ? 'disabled style="opacity:.3"' : ''}>‹</button>
-          <span class="manche-nav-info">${mancheIdx + 1} / ${totalManches}</span>
-          <button class="btn-circle" onclick="nextMancheFlip7()" ${mancheIdx < totalManches - 1 ? '' : ''}>›</button>
-        </div>
-      </div>
-
-      <!-- totaux -->
-      <div class="totals-bar">
-        ${players.map(p => {
-          const t = data.totals[p.id];
-          const pct = Math.min(100, Math.round(t / 2));
-          const col = t >= 200 ? 'var(--green)' : t >= 150 ? 'var(--gold)' : 'var(--accent)';
-          return `<div class="total-pill">
-            <div class="total-pill-name">${p.emoji} ${p.name}</div>
-            <div class="total-pill-val" style="color:${col}">${t}</div>
-            <div class="total-pill-bar"><div class="total-pill-fill" style="width:${pct}%;background:${col}"></div></div>
-          </div>`;
-        }).join('')}
       </div>
 
       ${alertHtml}
 
-      <!-- scores manche courante -->
-      <div class="card">
-        <div style="font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:10px;text-transform:uppercase;letter-spacing:.06em">
-          Scores — Manche ${mancheIdx + 1}
-        </div>
-        <div class="score-table">
-          ${players.map(p => {
-            const val = m.scores[p.id] || 0;
-            const total = data.totals[p.id];
-            const totalCls = total >= 200 ? 'win' : total >= 150 ? '' : '';
-            return `<div class="score-player-row">
-              <div class="player-info">
-                <div class="player-name">${p.emoji} ${p.name}</div>
-                <div class="player-cumul">Total : ${total} pts</div>
-              </div>
-              <div class="score-controls">
-                <button class="btn-circle" onclick="f7Minus('${p.id}')">−</button>
-                <input type="text" inputmode="numeric" class="score-input" id="f7inp-${p.id}"
-                  value="${val}"
-                  onchange="f7InputChange('${p.id}', this.value)">
-                <button class="btn-circle" onclick="f7Plus('${p.id}')">+</button>
-                <button class="btn-flip-bonus ${m.bonus[p.id] ? 'active' : ''}"
-                  onclick="toggleFlip7Bonus('${p.id}')" title="+15 pts Flip 7">🃏</button>
-              </div>
-            </div>`;
-          }).join('')}
-        </div>
-      </div>
+      <!-- PLAYER CARDS -->
+      ${players.map(p => {
+        const val = m.scores[p.id] || 0;
+        const total = data.totals[p.id];
+        const isLeader = total === Math.max(...players.map(x => data.totals[x.id])) && total > 0;
+        const isDanger = total >= 150 && total < 200;
+        const cardCls = total >= 200 ? 'leader' : isDanger ? 'danger-zone' : '';
+        const totalCls = total >= 200 ? 'leader' : isDanger ? 'danger-zone' : '';
+        const totalCol = total >= 200 ? 'var(--green)' : total >= 150 ? 'var(--gold)' : 'var(--text-2)';
+        return `<div class="player-card-a ${cardCls}">
+          <div class="pca-header">
+            <span class="pca-name">${p.emoji} ${p.name}</span>
+            <span class="pca-total ${totalCls}" style="color:${totalCol}">Total : ${total} pts</span>
+          </div>
+          <div class="pca-controls">
+            <button class="btn-circle" onclick="f7Minus('${p.id}')">−</button>
+            <input type="text" inputmode="numeric" class="score-input" id="f7inp-${p.id}"
+              value="${val}" onchange="f7InputChange('${p.id}', this.value)">
+            <button class="btn-circle" onclick="f7Plus('${p.id}')">+</button>
+            <button class="btn-flip-bonus ${m.bonus[p.id] ? 'active' : ''}"
+              onclick="toggleFlip7Bonus('${p.id}')" title="+15 pts Flip 7">🃏</button>
+          </div>
+        </div>`;
+      }).join('')}
 
       <!-- footer -->
       <div class="manche-footer">
@@ -1126,70 +1171,63 @@ function renderSkullKingManche() {
   const m = data.manches[mancheIdx];
   const totaux = skTotaux();
 
+  const gameImgSK = GAMES['skull_king']?.img || '';
   const el = document.getElementById('view-game');
   el.innerHTML = `
     <div class="manche-screen">
-      <div class="manche-topbar">
-        <div>
-          <div class="manche-title">💀 Skull King</div>
-          <div class="manche-sub">Manche ${m.num} · ${m.cards} carte${m.cards > 1 ? 's' : ''}</div>
-        </div>
-        <div class="manche-nav">
-          <button class="btn btn-glass btn-sm" onclick="openManchesModal()" style="font-size:12px">Voir tout</button>
-          <button class="btn-circle" onclick="prevManche()" ${mancheIdx === 0 ? 'disabled style="opacity:.3"' : ''}>‹</button>
-          <span class="manche-nav-info">${mancheIdx + 1} / 10</span>
-          <button class="btn-circle" onclick="nextMancheSK()">›</button>
+      <!-- HERO -->
+      <div class="game-hero">
+        ${gameImgSK ? `<div class="game-hero-bg" style="background-image:url('${gameImgSK}')"></div>` : ''}
+        <div class="game-hero-overlay"></div>
+        <div class="game-hero-content">
+          <div class="game-hero-left">
+            <div class="game-hero-title">💀 Skull King</div>
+            <div class="game-hero-sub">Manche ${m.num} · ${m.cards} carte${m.cards > 1 ? 's' : ''}</div>
+          </div>
+          <div class="game-hero-nav">
+            <span class="game-hero-all" onclick="openManchesModal()">Voir tout</span>
+            <button class="game-hero-btn" onclick="prevManche()" ${mancheIdx === 0 ? 'disabled' : ''}>‹</button>
+            <span class="game-hero-num">${mancheIdx + 1}/10</span>
+            <button class="game-hero-btn" onclick="nextMancheSK()">›</button>
+          </div>
         </div>
       </div>
 
-      <!-- totaux -->
-      <div class="totals-bar">
-        ${players.map(p => {
-          const t = totaux[p.id];
-          const col = t > 0 ? 'var(--green)' : t < 0 ? 'var(--red)' : 'var(--text)';
-          return `<div class="total-pill">
-            <div class="total-pill-name">${p.emoji} ${p.name}</div>
-            <div class="total-pill-val" style="color:${col}">${t > 0 ? '+' : ''}${t}</div>
-          </div>`;
-        }).join('')}
-      </div>
-
-      <!-- saisie manche -->
-      <div class="card">
-        <div style="font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:10px;text-transform:uppercase;letter-spacing:.06em">
-          Manche ${m.num} — ${m.cards} carte${m.cards > 1 ? 's' : ''}
-        </div>
-        ${players.map(p => {
-          const d = m.players[p.id];
-          const pts = skPts(d.mise, d.plis, d.bonus, m.cards);
-          const ptsCls = pts > 0 ? 'pos' : pts < 0 ? 'neg' : 'zero';
-          const bothFilled = d.mise !== '' && d.plis !== '';
-          return `<div class="sk-row">
-            <div class="sk-name">${p.emoji} ${p.name}</div>
-            <div class="sk-fields">
-              <div class="sk-field-wrap">
-                <div class="sk-field-label">Mise</div>
-                <input type="text" inputmode="numeric" class="sk-field" value="${d.mise}"
-                  placeholder="—"
-                  onchange="updateSK(${mancheIdx},'${p.id}','mise',this.value)">
-              </div>
-              <div class="sk-field-wrap">
-                <div class="sk-field-label">Plis</div>
-                <input type="text" inputmode="numeric" class="sk-field" value="${d.plis}"
-                  placeholder="—"
-                  onchange="updateSK(${mancheIdx},'${p.id}','plis',this.value)">
-              </div>
-              <div class="sk-field-wrap">
-                <div class="sk-field-label">Bonus</div>
-                <input type="text" inputmode="numeric" class="sk-field" value="${d.bonus}"
-                  placeholder="0"
-                  onchange="updateSK(${mancheIdx},'${p.id}','bonus',this.value)">
-              </div>
-              <div class="sk-pts ${ptsCls}">${bothFilled ? (pts > 0 ? '+' : '') + pts : '—'}</div>
+      <!-- PLAYER CARDS -->
+      ${players.map(p => {
+        const d = m.players[p.id];
+        const pts = skPts(d.mise, d.plis, d.bonus, m.cards);
+        const ptsCls = pts > 0 ? 'pos' : pts < 0 ? 'neg' : 'zero';
+        const bothFilled = d.mise !== '' && d.plis !== '';
+        const cumul = totaux[p.id];
+        const cumulCol = cumul > 0 ? 'var(--green)' : cumul < 0 ? 'var(--red)' : 'var(--text-2)';
+        return `<div class="sk-player-card-a">
+          <div class="sk-pca-header">
+            <span class="sk-pca-name">${p.emoji} ${p.name}</span>
+            <div>
+              <span class="sk-pca-pts ${ptsCls}">${bothFilled ? (pts > 0 ? '+' : '') + pts + ' pts' : '—'}</span>
+              <span style="font-size:11px;color:${cumulCol};margin-left:8px">Cumul : ${cumul > 0 ? '+' : ''}${cumul}</span>
             </div>
-          </div>`;
-        }).join('')}
-      </div>
+          </div>
+          <div class="sk-pca-fields">
+            <div class="sk-pca-field-wrap">
+              <div class="sk-pca-label">Mise</div>
+              <input type="text" inputmode="numeric" class="sk-pca-input" value="${d.mise}"
+                placeholder="—" onchange="updateSK(${mancheIdx},'${p.id}','mise',this.value)">
+            </div>
+            <div class="sk-pca-field-wrap">
+              <div class="sk-pca-label">Plis</div>
+              <input type="text" inputmode="numeric" class="sk-pca-input" value="${d.plis}"
+                placeholder="—" onchange="updateSK(${mancheIdx},'${p.id}','plis',this.value)">
+            </div>
+            <div class="sk-pca-field-wrap">
+              <div class="sk-pca-label">Bonus</div>
+              <input type="text" inputmode="numeric" class="sk-pca-input" value="${d.bonus}"
+                placeholder="0" onchange="updateSK(${mancheIdx},'${p.id}','bonus',this.value)">
+            </div>
+          </div>
+        </div>`;
+      }).join('')}
 
       <div class="manche-footer">
         <button class="btn btn-glass" style="flex:1" onclick="openManchesModal()">📋 Manches</button>
@@ -1225,12 +1263,17 @@ function renderAgricolaManche() {
   const el = document.getElementById('view-game');
   el.innerHTML = `
     <div class="manche-screen">
-      <div class="manche-topbar">
-        <div>
-          <div class="manche-title">🌾 Agricola</div>
-          <div class="manche-sub">Saisis les quantités, les points sont calculés automatiquement</div>
+      <!-- HERO -->
+      <div class="game-hero" style="margin-bottom:12px">
+        ${GAMES['agricola']?.img ? `<div class="game-hero-bg" style="background-image:url('${GAMES['agricola'].img}')"></div>` : ''}
+        <div class="game-hero-overlay"></div>
+        <div class="game-hero-content">
+          <div class="game-hero-left">
+            <div class="game-hero-title">🌾 Agricola</div>
+            <div class="game-hero-sub">Saisis les quantités — les pts sont calculés</div>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="finishGame('agricola')" style="margin-bottom:2px">Résultats →</button>
         </div>
-        <button class="btn btn-primary btn-sm" onclick="finishGame('agricola')">Résultats →</button>
       </div>
 
       <!-- en-têtes joueurs -->
@@ -1357,12 +1400,17 @@ function renderSevenWondersManche() {
 
   el.innerHTML = `
     <div class="manche-screen">
-      <div class="manche-topbar">
-        <div>
-          <div class="manche-title">🏛️ 7 Wonders</div>
-          <div class="manche-sub">Saisis les valeurs, les points sont calculés</div>
+      <!-- HERO -->
+      <div class="game-hero" style="margin-bottom:12px">
+        ${GAMES['seven_wonders']?.img ? `<div class="game-hero-bg" style="background-image:url('${GAMES['seven_wonders'].img}')"></div>` : ''}
+        <div class="game-hero-overlay"></div>
+        <div class="game-hero-content">
+          <div class="game-hero-left">
+            <div class="game-hero-title">🏛️ 7 Wonders</div>
+            <div class="game-hero-sub">Saisis les valeurs — les pts sont calculés</div>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="finishGame('seven_wonders')" style="margin-bottom:2px">Résultats →</button>
         </div>
-        <button class="btn btn-primary btn-sm" onclick="finishGame('seven_wonders')">Résultats →</button>
       </div>
 
       <!-- totaux live -->
