@@ -204,7 +204,6 @@ body::before {
   position: absolute; inset: 0;
   background-size: cover; background-position: center;
   filter: blur(8px) brightness(.35) saturate(1.5);
-  transform: scale(1.12);
 }
 .game-hero-overlay {
   position: absolute; inset: 0;
@@ -962,8 +961,9 @@ function showView(name) {
 function renderGameGrid() {
   document.getElementById('game-grid').innerHTML = Object.values(GAMES).map(g => {
     const cropC = g.crop_card;
+    const bgCard = cropBgStyle(cropC);
     const bgStyle = g.img
-      ? `background-image:url('${g.img}');${cropC ? `transform:translate(${cropC.x||0}px,${cropC.y||0}px) scale(${cropC.zoom||1});transform-origin:0 0` : ''}`
+      ? `background-image:url('${g.img}');background-position:${bgCard.pos};background-size:${bgCard.size}`
       : '';
     return `<div class="game-card" id="gc-${g.id}" onclick="selectGame('${g.id}')">
       <div class="game-card-bg" style="${bgStyle}"></div>
@@ -1663,10 +1663,16 @@ function updateSW(pid, field, val) {
 // ============================================================
 //  HELPER — génère le HTML du hero bandeau
 // ============================================================
-function cropStyle(params, filter) {
-  if (!params) return `filter:${filter}`;
+function cropBgStyle(params) {
+  // Convertit x/y/zoom en background-position et background-size
+  if (!params) return { pos: 'center', size: 'cover' };
   const { x=0, y=0, zoom=1 } = params;
-  return `filter:${filter};transform:translate(${x}px,${y}px) scale(${zoom});transform-origin:0 0`;
+  // zoom → background-size en %
+  const sizeVal = Math.round(zoom * 100) + '%';
+  // x/y → background-position (offset depuis le coin, inversé car on déplace l'image)
+  const posX = 'calc(50% + ' + x + 'px)';
+  const posY = 'calc(50% + ' + y + 'px)';
+  return { pos: posX + ' ' + posY, size: sizeVal + ' auto' };
 }
 
 function gameHeroHTML(gameId, subtitle, navHTML) {
@@ -1677,9 +1683,10 @@ function gameHeroHTML(gameId, subtitle, navHTML) {
   const bgSrc  = banner || thumb;
   const cropP  = hasBanner ? (g?.crop_banner || null) : (g?.crop_card || null);
   const filter = hasBanner ? 'brightness(.75)' : 'blur(8px) brightness(.35) saturate(1.5)';
+  const bg = cropBgStyle(cropP);
   return `
     <div class="game-hero${hasBanner ? ' has-banner' : ''}" style="margin-bottom:12px">
-      ${bgSrc ? `<div class="game-hero-bg" style="background-image:url('${bgSrc}');${cropStyle(cropP, filter)}"></div>` : ''}
+      ${bgSrc ? `<div class="game-hero-bg" style="background-image:url('${bgSrc}');background-position:${bg.pos};background-size:${bg.size};filter:${filter}"></div>` : ''}
       <div class="game-hero-overlay" style="${hasBanner ? 'background:linear-gradient(to bottom, rgba(0,0,0,.05) 0%, rgba(0,0,0,.55) 100%)' : ''}"></div>
       <div class="game-hero-content">
         <div class="game-hero-left">
@@ -2442,6 +2449,8 @@ function openCrop(gameId, type, url) {
 
 function applyCropTransform() {
   const img = document.getElementById('crop-img');
+  // transform-origin center pour que le zoom soit centré visuellement
+  img.style.transformOrigin = 'center center';
   img.style.transform = `translate(${cropState.x}px, ${cropState.y}px) scale(${cropState.zoom})`;
 }
 
