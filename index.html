@@ -491,7 +491,63 @@ body::before {
 .manche-summary-scores { flex: 1; font-size: 12px; color: var(--text-2); }
 
 /* ---- COMPTEUR ---- */
-.counter-card {
+/* ---- SCORE HIDE ---- */
+.score-pts-label { display: none !important; }
+.totals-bar { display: none !important; }
+.score-total-live { display: none !important; }
+
+/* ---- REVEAL SCREEN ---- */
+.reveal-overlay {
+  position: fixed; inset: 0; z-index: 2000;
+  background: #000;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 24px; overflow-y: auto;
+}
+.reveal-title {
+  font-size: 13px; font-weight: 600; letter-spacing: .15em;
+  text-transform: uppercase; color: rgba(255,255,255,.4);
+  margin-bottom: 28px; text-align: center;
+}
+.reveal-cards { width: 100%; max-width: 420px; display: flex; flex-direction: column; gap: 12px; }
+.reveal-card {
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 18px; padding: 16px 20px;
+  display: flex; align-items: center; gap: 16px;
+  opacity: 0; transform: translateY(30px);
+  transition: opacity .6s ease, transform .6s ease;
+}
+.reveal-card.show { opacity: 1; transform: translateY(0); }
+.reveal-card.first {
+  background: rgba(255,214,10,.1);
+  border-color: rgba(255,214,10,.4);
+  box-shadow: 0 0 50px rgba(255,214,10,.2);
+}
+.reveal-rank { font-size: 26px; font-weight: 900; width: 36px; text-align: center; }
+.reveal-rank.gold   { color: #FFD60A; }
+.reveal-rank.silver { color: #C0C0C0; }
+.reveal-rank.bronze { color: #CD7F32; }
+.reveal-rank.other  { color: rgba(255,255,255,.25); font-size: 18px; }
+.reveal-name { flex: 1; font-size: 18px; font-weight: 700; color: #fff; letter-spacing: -.01em; }
+.reveal-score {
+  font-size: 34px; font-weight: 900; color: #fff;
+  letter-spacing: -.03em; min-width: 64px; text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.reveal-score.counting { color: #64D2FF; }
+.reveal-score.final-gold { color: #FFD60A; }
+.reveal-game-name {
+  font-size: 20px; font-weight: 700; color: rgba(255,255,255,.8);
+  text-align: center; margin-bottom: 6px; letter-spacing: -.01em;
+}
+.reveal-buttons {
+  margin-top: 28px; opacity: 0; transition: opacity .6s ease;
+  display: flex; gap: 10px; width: 100%; max-width: 420px;
+}
+.reveal-buttons.show { opacity: 1; }
+
+/* ---- COUNTER ---- */
   background: var(--glass); border: 1px solid var(--border);
   border-radius: var(--r-lg); overflow: hidden;
   margin-bottom: 10px;
@@ -815,29 +871,29 @@ const REF = 'ptg_boardgames';
 //  GAMES
 // ============================================================
 const GAMES_DEF = {
-  agricola:      { id:'agricola', rules:'https://www.jeuxavolonte.asso.fr/regles/agricola.pdf',      name:'Agricola',                   emoji:'', desc:'Décompte final', maxPlayers: 5,
+  agricola:      { id:'agricola', reveal:true, rules:'https://www.jeuxavolonte.asso.fr/regles/agricola.pdf',      name:'Agricola',                   emoji:'', desc:'Décompte final', maxPlayers: 5,
     img:'https://cf.geekdo-images.com/saRfGEGSPFHzMtDsECf6xg__opengraph/img/HXClHNWjSWuCJLyLrXYiHJTSbEk=/fit-in/1200x630/filters:strip_icc()/pic6137663.jpg', img_banner:'' },
-  dewan:         { id:'dewan', rules:'https://cdn.svc.asmodee.net/production-spacecowboys/uploads/2025/11/SCFC01_FR_DEWAN_RULES_20250612_compressed.pdf',         name:'Dewan',                      emoji:'', desc:'Décompte final · 4 catégories', maxPlayers: 4,
+  dewan:         { id:'dewan', reveal:true, rules:'https://cdn.svc.asmodee.net/production-spacecowboys/uploads/2025/11/SCFC01_FR_DEWAN_RULES_20250612_compressed.pdf',         name:'Dewan',                      emoji:'', desc:'Décompte final · 4 catégories', maxPlayers: 4,
     img:'', img_banner:'' },
-  flip7:         { id:'flip7', rules:'https://media.play-in.com/pdf/rules_games/flip_7_fr.pdf',         name:'Flip 7',                     emoji:'', desc:'Stop ou encore · 200 pts', maxPlayers: 18,
+  flip7:         { id:'flip7', reveal:false, rules:'https://media.play-in.com/pdf/rules_games/flip_7_fr.pdf',         name:'Flip 7',                     emoji:'', desc:'Stop ou encore · 200 pts', maxPlayers: 18,
     img:'https://catchupgames.com/wp-content/uploads/2022/10/vq1w6Btk.jpg', img_banner:'' },
-  iaww:          { id:'iaww', rules:'https://trukmuchspot.fr/wp-content/uploads/2020/03/Wonderful-World-regles.pdf',          name:"It's a Wonderful World",     emoji:'', desc:'Décompte final · 4 tours', maxPlayers: 5,
+  iaww:          { id:'iaww', reveal:true, rules:'https://trukmuchspot.fr/wp-content/uploads/2020/03/Wonderful-World-regles.pdf',          name:"It's a Wonderful World",     emoji:'', desc:'Décompte final · 4 tours', maxPlayers: 5,
     img:'', img_banner:'' },
-  pillards:      { id:'pillards', rules:'https://cdn.1j1ju.com/medias/25/d4/83-pillards-de-la-mer-du-nord-regle.pdf',      name:'Pillards de la Mer du Nord', emoji:'', desc:'Décompte final', maxPlayers: 4,
+  pillards:      { id:'pillards', reveal:true, rules:'https://cdn.1j1ju.com/medias/25/d4/83-pillards-de-la-mer-du-nord-regle.pdf',      name:'Pillards de la Mer du Nord', emoji:'', desc:'Décompte final', maxPlayers: 4,
     img:'', img_banner:'' },
-  seven_wonders: { id:'seven_wonders', rules:'https://www.jeuxavolonte.asso.fr/regles/7_wonders.pdf', name:'7 Wonders',                  emoji:'', desc:'Décompte final · 7 catégories', maxPlayers: 7,
+  seven_wonders: { id:'seven_wonders', reveal:true, rules:'https://www.jeuxavolonte.asso.fr/regles/7_wonders.pdf', name:'7 Wonders',                  emoji:'', desc:'Décompte final · 7 catégories', maxPlayers: 7,
     img:'', img_banner:'' },
-  skull_king:    { id:'skull_king', rules:'https://media.play-in.com/pdf/rules_games/skull_king_regles_fr.pdf',    name:'Skull King',                  emoji:'', desc:'Jeu de plis · 10 manches', maxPlayers: 8,
+  skull_king:    { id:'skull_king', reveal:false, rules:'https://media.play-in.com/pdf/rules_games/skull_king_regles_fr.pdf',    name:'Skull King',                  emoji:'', desc:'Jeu de plis · 10 manches', maxPlayers: 8,
     img:'https://www.grandpabecksgames.com/cdn/shop/files/SK_Main_1200x1200.jpg?v=1780682436', img_banner:'' },
-  wingspan:      { id:'wingspan', rules:'https://ludovox.fr/wp-content/uploads/2021/06/RExWingspanFR.pdf',      name:'Wingspan',                   emoji:'', desc:'Décompte final · 4 manches', maxPlayers: 5,
+  wingspan:      { id:'wingspan', reveal:true, rules:'https://ludovox.fr/wp-content/uploads/2021/06/RExWingspanFR.pdf',      name:'Wingspan',                   emoji:'', desc:'Décompte final · 4 manches', maxPlayers: 5,
     img:'', img_banner:'' },
-  maraudeurs:    { id:'maraudeurs', rules:'https://www.dontpanicgames.com/static/Maraudeurs-Midgard-regles-vf.pdf', name:'Maraudeurs de Midgard',      emoji:'', desc:'Décompte final · 6 tours', maxPlayers: 4,
+  maraudeurs:    { id:'maraudeurs', reveal:true, rules:'https://www.dontpanicgames.com/static/Maraudeurs-Midgard-regles-vf.pdf', name:'Maraudeurs de Midgard',      emoji:'', desc:'Décompte final · 6 tours', maxPlayers: 4,
     img:'', img_banner:'' },
   narak:         { id:'narak',      rules:'https://iello.fr/wp-content/uploads/2021/01/Narak_Rulebook.pdf',           name:'Ruines Perdues de Narak',   emoji:'', desc:'Décompte final · 5 manches', maxPlayers: 4,
     img:'', img_banner:'' },
-  citadelles:    { id:'citadelles', rules:'https://cdn.1j1ju.com/medias/cb/4e/c5-citadelles-regle.pdf',               name:'Citadelles',                emoji:'', desc:'7 quartiers · décompte final', maxPlayers: 7,
+  citadelles:    { id:'citadelles', reveal:true, rules:'https://cdn.1j1ju.com/medias/cb/4e/c5-citadelles-regle.pdf',               name:'Citadelles',                emoji:'', desc:'7 quartiers · décompte final', maxPlayers: 7,
     img:'', img_banner:'' },
-  viva_catrina:  { id:'viva_catrina', rules:'https://cdn.blackrockgames.fr/items/FLY056VI/FR.pdf',                    name:'Viva Catrina',              emoji:'', desc:'Décompte final · tuiles', maxPlayers: 6,
+  viva_catrina:  { id:'viva_catrina', reveal:true, rules:'https://cdn.blackrockgames.fr/items/FLY056VI/FR.pdf',                    name:'Viva Catrina',              emoji:'', desc:'Décompte final · tuiles', maxPlayers: 6,
     img:'', img_banner:'' },
 };
 // Tri alphabétique
@@ -1379,7 +1435,7 @@ function renderAgricolaManche() {
                       value="${qty || ''}"
                       placeholder="—"
                       onchange="updateAgricola('${p.id}','${item.id}',this.value)">
-                    <div style="font-size:11px;font-weight:700;color:${ptsCol}" id="agr-pts-${p.id}-${item.id}">
+                    <div style="font-size:11px;font-weight:700;color:${ptsCol} score-pts-label" id="agr-pts-${p.id}-${item.id}">
                       ${pts > 0 ? '+' : ''}${pts} pt${Math.abs(pts) > 1 ? 's' : ''}
                     </div>
                   </div>`;
@@ -1389,7 +1445,7 @@ function renderAgricolaManche() {
         </div>`).join('')}
 
       <!-- total live -->
-      <div class="card" style="background:var(--glass-md)">
+      <div class="card score-total-live" style="background:var(--glass-md)">
         <div style="display:flex;align-items:center;gap:6px">
           <div style="flex:1;font-size:14px;font-weight:700;color:var(--accent)">Total</div>
           <div style="display:flex;gap:6px" id="agr-totals-display">
@@ -1508,7 +1564,7 @@ function renderSevenWondersManche() {
                 <input type="text" inputmode="numeric" class="agr-field"
                   value="${data.scores[p.id].militaire || ''}" placeholder="—"
                   oninput="updateSW('${p.id}','militaire',this.value)">
-                <div style="font-size:11px;font-weight:700;color:${col}" id="sw-pts-militaire-${p.id}">${v > 0 ? '+' : ''}${v} pts</div>
+                <div style="font-size:11px;font-weight:700;color:${col} score-pts-label" id="sw-pts-militaire-${p.id}">${v > 0 ? '+' : ''}${v} pts</div>
               </div>`;
             }).join('')}
           </div>
@@ -1531,7 +1587,7 @@ function renderSevenWondersManche() {
                 <input type="text" inputmode="numeric" class="agr-field"
                   value="${data.scores[p.id].tresor || ''}" placeholder="—"
                   oninput="updateSW('${p.id}','tresor',this.value)">
-                <div style="font-size:11px;font-weight:700;color:var(--gold)" id="sw-pts-tresor-${p.id}">+${pts} pt${pts > 1 ? 's' : ''}</div>
+                <div style="font-size:11px;font-weight:700;color:var(--gold) score-pts-label" id="sw-pts-tresor-${p.id}">+${pts} pt${pts > 1 ? 's' : ''}</div>
               </div>`;
             }).join('')}
           </div>
@@ -1638,7 +1694,7 @@ function renderSevenWondersManche() {
       </div>
 
       <!-- TOTAL -->
-      <div class="card" style="background:var(--glass-md)">
+      <div class="card score-total-live" style="background:var(--glass-md)">
         <div style="display:flex;align-items:center">
           <div style="flex:1;font-size:14px;font-weight:700;color:var(--accent)">Total</div>
           <div style="display:flex;gap:6px">
@@ -1836,7 +1892,7 @@ function renderDewanManche() {
                 <input type="text" inputmode="numeric" class="agr-field" style="width:100%"
                   value="${data.scores[p.id].histoire || ''}" placeholder="—"
                   oninput="updateDewan('${p.id}','histoire',this.value)">
-                <div style="font-size:11px;font-weight:700;color:var(--green)" id="dw-pts-histoire-${p.id}">+${v} pts</div>
+                <div style="font-size:11px;font-weight:700;color:var(--green) score-pts-label" id="dw-pts-histoire-${p.id}">+${v} pts</div>
               </div>`;
             }).join('')}
           </div>
@@ -1859,7 +1915,7 @@ function renderDewanManche() {
                 <input type="text" inputmode="numeric" class="agr-field" style="width:100%"
                   value="${data.scores[p.id].feu || ''}" placeholder="—"
                   oninput="updateDewan('${p.id}','feu',this.value)">
-                <div style="font-size:11px;font-weight:700;color:${col}" id="dw-pts-feu-${p.id}">+${t.feu}${t.bonusFeu ? ' +4' : ''} pts</div>
+                <div style="font-size:11px;font-weight:700;color:${col} score-pts-label" id="dw-pts-feu-${p.id}">+${t.feu}${t.bonusFeu ? ' +4' : ''} pts</div>
               </div>`;
             }).join('')}
           </div>
@@ -1884,7 +1940,7 @@ function renderDewanManche() {
                 <input type="text" inputmode="numeric" class="agr-field" style="width:100%"
                   value="${data.scores[p.id].groupes || ''}" placeholder="—"
                   oninput="updateDewan('${p.id}','groupes',this.value)">
-                <div style="font-size:11px;font-weight:700;color:var(--green)" id="dw-pts-groupes-${p.id}">+${g * 4} pts</div>
+                <div style="font-size:11px;font-weight:700;color:var(--green) score-pts-label" id="dw-pts-groupes-${p.id}">+${g * 4} pts</div>
               </div>`;
             }).join('')}
           </div>
@@ -1906,7 +1962,7 @@ function renderDewanManche() {
                 <input type="text" inputmode="numeric" class="agr-field" style="width:100%"
                   value="${data.scores[p.id].baies || ''}" placeholder="—"
                   oninput="updateDewan('${p.id}','baies',this.value)">
-                <div style="font-size:11px;font-weight:700;color:var(--green)" id="dw-pts-baies-${p.id}">+${b * 2} pts</div>
+                <div style="font-size:11px;font-weight:700;color:var(--green) score-pts-label" id="dw-pts-baies-${p.id}">+${b * 2} pts</div>
               </div>`;
             }).join('')}
           </div>
@@ -1914,7 +1970,7 @@ function renderDewanManche() {
       </div>
 
       <!-- TOTAL -->
-      <div class="card" style="background:var(--glass-md)">
+      <div class="card score-total-live" style="background:var(--glass-md)">
         <div style="display:flex;align-items:center">
           <div style="flex:1;font-size:14px;font-weight:700;color:var(--accent)">Total</div>
           <div style="display:flex;gap:6px">
@@ -2005,7 +2061,7 @@ function renderWingspanManche() {
                     <input type="text" inputmode="numeric" class="agr-field" style="width:100%"
                       value="${data.scores[p.id]['oiseaux'] || ''}" placeholder="—"
                       oninput="updateWingspan('oiseaux', '${p.id}', this.value)">
-                    <div style="font-size:11px;font-weight:700;color:var(--green)" id="wingspan-pts-oiseaux-${p.id}">+${v} pts</div>
+                    <div style="font-size:11px;font-weight:700;color:var(--green) score-pts-label" id="wingspan-pts-oiseaux-${p.id}">+${v} pts</div>
                   </div>`;
                 }).join('')}
               </div>
@@ -2022,7 +2078,7 @@ function renderWingspanManche() {
                     <input type="text" inputmode="numeric" class="agr-field" style="width:100%"
                       value="${data.scores[p.id]['bonus'] || ''}" placeholder="—"
                       oninput="updateWingspan('bonus', '${p.id}', this.value)">
-                    <div style="font-size:11px;font-weight:700;color:var(--green)" id="wingspan-pts-bonus-${p.id}">+${v} pts</div>
+                    <div style="font-size:11px;font-weight:700;color:var(--green) score-pts-label" id="wingspan-pts-bonus-${p.id}">+${v} pts</div>
                   </div>`;
                 }).join('')}
               </div>
@@ -2039,7 +2095,7 @@ function renderWingspanManche() {
                     <input type="text" inputmode="numeric" class="agr-field" style="width:100%"
                       value="${data.scores[p.id]['objectifs'] || ''}" placeholder="—"
                       oninput="updateWingspan('objectifs', '${p.id}', this.value)">
-                    <div style="font-size:11px;font-weight:700;color:var(--green)" id="wingspan-pts-objectifs-${p.id}">+${v} pts</div>
+                    <div style="font-size:11px;font-weight:700;color:var(--green) score-pts-label" id="wingspan-pts-objectifs-${p.id}">+${v} pts</div>
                   </div>`;
                 }).join('')}
               </div>
@@ -2056,7 +2112,7 @@ function renderWingspanManche() {
                     <input type="text" inputmode="numeric" class="agr-field" style="width:100%"
                       value="${data.scores[p.id]['oeufs'] || ''}" placeholder="—"
                       oninput="updateWingspan('oeufs', '${p.id}', this.value)">
-                    <div style="font-size:11px;font-weight:700;color:var(--green)" id="wingspan-pts-oeufs-${p.id}">+${v} pts</div>
+                    <div style="font-size:11px;font-weight:700;color:var(--green) score-pts-label" id="wingspan-pts-oeufs-${p.id}">+${v} pts</div>
                   </div>`;
                 }).join('')}
               </div>
@@ -2073,7 +2129,7 @@ function renderWingspanManche() {
                     <input type="text" inputmode="numeric" class="agr-field" style="width:100%"
                       value="${data.scores[p.id]['nourriture'] || ''}" placeholder="—"
                       oninput="updateWingspan('nourriture', '${p.id}', this.value)">
-                    <div style="font-size:11px;font-weight:700;color:var(--green)" id="wingspan-pts-nourriture-${p.id}">+${v} pts</div>
+                    <div style="font-size:11px;font-weight:700;color:var(--green) score-pts-label" id="wingspan-pts-nourriture-${p.id}">+${v} pts</div>
                   </div>`;
                 }).join('')}
               </div>
@@ -2090,13 +2146,13 @@ function renderWingspanManche() {
                     <input type="text" inputmode="numeric" class="agr-field" style="width:100%"
                       value="${data.scores[p.id]['cartes_gl'] || ''}" placeholder="—"
                       oninput="updateWingspan('cartes_gl', '${p.id}', this.value)">
-                    <div style="font-size:11px;font-weight:700;color:var(--green)" id="wingspan-pts-cartes_gl-${p.id}">+${v} pts</div>
+                    <div style="font-size:11px;font-weight:700;color:var(--green) score-pts-label" id="wingspan-pts-cartes_gl-${p.id}">+${v} pts</div>
                   </div>`;
                 }).join('')}
               </div>
             </div>
           </div>
-      <div class="card" style="background:var(--glass-md)">
+      <div class="card score-total-live" style="background:var(--glass-md)">
         <div style="display:flex;align-items:center">
           <div style="flex:1;font-size:14px;font-weight:700;color:var(--accent)">Total</div>
           <div style="display:flex;gap:6px">
@@ -2185,7 +2241,7 @@ function renderIAWWManche() {
                     <input type="text" inputmode="numeric" class="agr-field" style="width:100%"
                       value="${data.scores[p.id]['bruts'] || ''}" placeholder="—"
                       oninput="updateIAWW('bruts', '${p.id}', this.value)">
-                    <div style="font-size:11px;font-weight:700;color:var(--green)" id="iaww-pts-bruts-${p.id}">+${v} pts</div>
+                    <div style="font-size:11px;font-weight:700;color:var(--green) score-pts-label" id="iaww-pts-bruts-${p.id}">+${v} pts</div>
                   </div>`;
                 }).join('')}
               </div>
@@ -2202,7 +2258,7 @@ function renderIAWWManche() {
                     <input type="text" inputmode="numeric" class="agr-field" style="width:100%"
                       value="${data.scores[p.id]['combos'] || ''}" placeholder="—"
                       oninput="updateIAWW('combos', '${p.id}', this.value)">
-                    <div style="font-size:11px;font-weight:700;color:var(--green)" id="iaww-pts-combos-${p.id}">+${v} pts</div>
+                    <div style="font-size:11px;font-weight:700;color:var(--green) score-pts-label" id="iaww-pts-combos-${p.id}">+${v} pts</div>
                   </div>`;
                 }).join('')}
               </div>
@@ -2219,7 +2275,7 @@ function renderIAWWManche() {
                     <input type="text" inputmode="numeric" class="agr-field" style="width:100%"
                       value="${data.scores[p.id]['generaux'] || ''}" placeholder="—"
                       oninput="updateIAWW('generaux', '${p.id}', this.value)">
-                    <div style="font-size:11px;font-weight:700;color:var(--green)" id="iaww-pts-generaux-${p.id}">+${v} pts</div>
+                    <div style="font-size:11px;font-weight:700;color:var(--green) score-pts-label" id="iaww-pts-generaux-${p.id}">+${v} pts</div>
                   </div>`;
                 }).join('')}
               </div>
@@ -2236,13 +2292,13 @@ function renderIAWWManche() {
                     <input type="text" inputmode="numeric" class="agr-field" style="width:100%"
                       value="${data.scores[p.id]['financiers'] || ''}" placeholder="—"
                       oninput="updateIAWW('financiers', '${p.id}', this.value)">
-                    <div style="font-size:11px;font-weight:700;color:var(--green)" id="iaww-pts-financiers-${p.id}">+${v} pts</div>
+                    <div style="font-size:11px;font-weight:700;color:var(--green) score-pts-label" id="iaww-pts-financiers-${p.id}">+${v} pts</div>
                   </div>`;
                 }).join('')}
               </div>
             </div>
           </div>
-      <div class="card" style="background:var(--glass-md)">
+      <div class="card score-total-live" style="background:var(--glass-md)">
         <div style="display:flex;align-items:center">
           <div style="flex:1;font-size:14px;font-weight:700;color:var(--accent)">Total</div>
           <div style="display:flex;gap:6px">
@@ -2336,7 +2392,7 @@ function renderPillardsManche() {
               <input type="text" inputmode="numeric" class="agr-field" style="width:100%"
                 value="${data.scores[p.id].pv_partie || ''}" placeholder="—"
                 oninput="updatePillards('pv_partie','${p.id}',this.value)">
-              <div style="font-size:11px;font-weight:700;color:var(--green)" id="pillards-pts-pv_partie-${p.id}">+${parseInt(data.scores[p.id].pv_partie)||0} pts</div>
+              <div style="font-size:11px;font-weight:700;color:var(--green) score-pts-label" id="pillards-pts-pv_partie-${p.id}">+${parseInt(data.scores[p.id].pv_partie)||0} pts</div>
             </div>`).join('')}
           </div>
         </div>
@@ -2353,7 +2409,7 @@ function renderPillardsManche() {
                 <input type="text" inputmode="numeric" class="agr-field" style="width:100%"
                   value="${data.scores[p.id].valkyrie || ''}" placeholder="—"
                   oninput="updatePillards('valkyrie','${p.id}',this.value)">
-                <div style="font-size:11px;font-weight:700;color:var(--green)" id="pillards-pts-valkyrie-${p.id}">+${VALKYRIE_PV[v]} pts</div>
+                <div style="font-size:11px;font-weight:700;color:var(--green) score-pts-label" id="pillards-pts-valkyrie-${p.id}">+${VALKYRIE_PV[v]} pts</div>
               </div>`;
             }).join('')}
           </div>
@@ -2367,7 +2423,7 @@ function renderPillardsManche() {
                 <input type="text" inputmode="numeric" class="agr-field" style="width:100%"
                   value="${data.scores[p.id].armement || ''}" placeholder="—"
                   oninput="updatePillards('armement','${p.id}',this.value)">
-                <div style="font-size:11px;font-weight:700;color:var(--green)" id="pillards-pts-armement-${p.id}">+${a} pts</div>
+                <div style="font-size:11px;font-weight:700;color:var(--green) score-pts-label" id="pillards-pts-armement-${p.id}">+${a} pts</div>
               </div>`;
             }).join('')}
           </div>
@@ -2383,7 +2439,7 @@ function renderPillardsManche() {
               <input type="text" inputmode="numeric" class="agr-field" style="width:100%"
                 value="${data.scores[p.id].offrandes || ''}" placeholder="—"
                 oninput="updatePillards('offrandes','${p.id}',this.value)">
-              <div style="font-size:11px;font-weight:700;color:var(--green)" id="pillards-pts-offrandes-${p.id}">+${parseInt(data.scores[p.id].offrandes)||0} pts</div>
+              <div style="font-size:11px;font-weight:700;color:var(--green) score-pts-label" id="pillards-pts-offrandes-${p.id}">+${parseInt(data.scores[p.id].offrandes)||0} pts</div>
             </div>`).join('')}
           </div>
         </div>
@@ -2394,7 +2450,7 @@ function renderPillardsManche() {
               <input type="text" inputmode="numeric" class="agr-field" style="width:100%"
                 value="${data.scores[p.id].equipage || ''}" placeholder="—"
                 oninput="updatePillards('equipage','${p.id}',this.value)">
-              <div style="font-size:11px;font-weight:700;color:var(--green)" id="pillards-pts-equipage-${p.id}">+${parseInt(data.scores[p.id].equipage)||0} pts</div>
+              <div style="font-size:11px;font-weight:700;color:var(--green) score-pts-label" id="pillards-pts-equipage-${p.id}">+${parseInt(data.scores[p.id].equipage)||0} pts</div>
             </div>`).join('')}
           </div>
         </div>
@@ -2415,7 +2471,7 @@ function renderPillardsManche() {
                   <input type="text" inputmode="numeric" class="agr-field" style="width:100%"
                     value="${data.scores[p.id][field] || ''}" placeholder="—"
                     oninput="updatePillards('${field}','${p.id}',this.value)">
-                  <div style="font-size:11px;font-weight:700;color:var(--green)" id="pillards-pts-${field}-${p.id}">+${pts} pts</div>
+                  <div style="font-size:11px;font-weight:700;color:var(--green) score-pts-label" id="pillards-pts-${field}-${p.id}">+${pts} pts</div>
                 </div>`;
               }).join('')}
             </div>
@@ -2423,7 +2479,7 @@ function renderPillardsManche() {
         }).join('')}
       </div>
 
-      <div class="card" style="background:var(--glass-md)">
+      <div class="card score-total-live" style="background:var(--glass-md)">
         <div style="display:flex;align-items:center">
           <div style="flex:1;font-size:14px;font-weight:700;color:var(--accent)">Total</div>
           <div style="display:flex;gap:6px">
@@ -2564,7 +2620,7 @@ function renderMaraudeursManche() {
                   <input type="text" inputmode="numeric" class="agr-field" style="width:100%"
                     value="${data.scores[p.id][item.id] || ''}" placeholder="—"
                     oninput="updateMaraudeurs('${item.id}','${p.id}',this.value)">
-                  <div style="font-size:11px;font-weight:700;color:var(--green)" id="mar-pts-${item.id}-${p.id}">+${v} pts</div>
+                  <div style="font-size:11px;font-weight:700;color:var(--green) score-pts-label" id="mar-pts-${item.id}-${p.id}">+${v} pts</div>
                 </div>`;
               }).join('')}
             </div>
@@ -2595,7 +2651,7 @@ function renderMaraudeursManche() {
                   <input type="text" inputmode="numeric" class="agr-field" style="width:100%"
                     value="${data.scores[p.id][item.id] || ''}" placeholder="—"
                     oninput="updateMaraudeurs('${item.id}','${p.id}',this.value)">
-                  <div style="font-size:11px;font-weight:700;color:var(--green)" id="mar-pts-${item.id}-${p.id}">+${v} pts</div>
+                  <div style="font-size:11px;font-weight:700;color:var(--green) score-pts-label" id="mar-pts-${item.id}-${p.id}">+${v} pts</div>
                 </div>`;
               }).join('')}
             </div>
@@ -2628,7 +2684,7 @@ function renderMaraudeursManche() {
                 <input type="text" inputmode="numeric" class="agr-field neg" style="width:100%"
                   value="${data.scores[p.id].terreur || ''}" placeholder="—"
                   oninput="updateMaraudeurs('terreur','${p.id}',this.value)">
-                <div style="font-size:11px;font-weight:700;color:var(--red)" id="mar-pts-terreur-${p.id}">${tv} pts</div>
+                <div style="font-size:11px;font-weight:700;color:var(--red) score-pts-label" id="mar-pts-terreur-${p.id}">${tv} pts</div>
               </div>`;
             }).join('')}
           </div>
@@ -2636,7 +2692,7 @@ function renderMaraudeursManche() {
       </div>
 
       <!-- Total -->
-      <div class="card" style="background:var(--glass-md)">
+      <div class="card score-total-live" style="background:var(--glass-md)">
         <div style="display:flex;align-items:center">
           <div style="flex:1;font-size:14px;font-weight:700;color:var(--accent)">Total</div>
           <div style="display:flex;gap:6px">
@@ -2732,12 +2788,12 @@ function renderNarakManche() {
             <input type="text" inputmode="numeric" class="agr-field ${cat.neg?'neg':''}" style="width:100%"
               value="${data.scores[p.id][cat.id]||''}" placeholder="—"
               oninput="updateNarak('${cat.id}','${p.id}',this.value)">
-            <div style="font-size:11px;font-weight:700;color:${col}" id="narak-pts-${cat.id}-${p.id}">${pts>=0?'+':''}${pts} pts</div>
+            <div style="font-size:11px;font-weight:700;color:${col} score-pts-label" id="narak-pts-${cat.id}-${p.id}">${pts>=0?'+':''}${pts} pts</div>
           </div>`;
         }).join('')}</div>
       </div>`).join('')}
     </div>
-    <div class="card" style="background:var(--glass-md)"><div style="display:flex;align-items:center"><div style="flex:1;font-size:14px;font-weight:700;color:var(--accent)">Total</div><div style="display:flex;gap:6px">${players.map((p,i)=>`<div style="width:72px;text-align:center"><div style="font-size:22px;font-weight:700" id="narak-total-${p.id}">${totals[i]}</div><div style="font-size:10px;color:var(--text-2)">${p.name}</div></div>`).join('')}</div></div></div>
+    <div class="card score-total-live" style="background:var(--glass-md)"><div style="display:flex;align-items:center"><div style="flex:1;font-size:14px;font-weight:700;color:var(--accent)">Total</div><div style="display:flex;gap:6px">${players.map((p,i)=>`<div style="width:72px;text-align:center"><div style="font-size:22px;font-weight:700" id="narak-total-${p.id}">${totals[i]}</div><div style="font-size:10px;color:var(--text-2)">${p.name}</div></div>`).join('')}</div></div></div>
     <div class="manche-footer"><button class="btn btn-primary btn-full" onclick="finishGame('narak')">Voir les résultats</button></div>
   </div>`;
 }
@@ -2822,7 +2878,7 @@ function renderCitadellesManche() {
       </div>`).join('')}
     </div>
 
-    <div class="card" style="background:var(--glass-md)"><div style="display:flex;align-items:center"><div style="flex:1;font-size:14px;font-weight:700;color:var(--accent)">Total</div><div style="display:flex;gap:6px">${players.map((p,i)=>`<div style="width:72px;text-align:center"><div style="font-size:22px;font-weight:700" id="cit-total-${p.id}">${totals[i]}</div><div style="font-size:10px;color:var(--text-2)">${p.name}</div></div>`).join('')}</div></div></div>
+    <div class="card score-total-live" style="background:var(--glass-md)"><div style="display:flex;align-items:center"><div style="flex:1;font-size:14px;font-weight:700;color:var(--accent)">Total</div><div style="display:flex;gap:6px">${players.map((p,i)=>`<div style="width:72px;text-align:center"><div style="font-size:22px;font-weight:700" id="cit-total-${p.id}">${totals[i]}</div><div style="font-size:10px;color:var(--text-2)">${p.name}</div></div>`).join('')}</div></div></div>
     <div class="manche-footer"><button class="btn btn-primary btn-full" onclick="finishGame('citadelles')">Voir les résultats</button></div>
   </div>`;
 }
@@ -2892,7 +2948,7 @@ function renderVivaCatrinaManche() {
         <input type="text" inputmode="numeric" class="agr-field" style="width:100%"
           value="${data.scores[p.id][id]||''}" placeholder="—"
           oninput="updateVivaCatrina('${id}','${p.id}',this.value)">
-        <div style="font-size:11px;font-weight:700;color:var(--green)" id="cat-pts-${id}-${p.id}">+${pts} pts</div>
+        <div style="font-size:11px;font-weight:700;color:var(--green) score-pts-label" id="cat-pts-${id}-${p.id}">+${pts} pts</div>
       </div>`;
     }).join('')}</div>
   </div>`;
@@ -2920,7 +2976,7 @@ function renderVivaCatrinaManche() {
       ${makeRow('autels',     'Autels',                 'Pts de tes autels selon leurs conditions','direct')}
     </div>
 
-    <div class="card" style="background:var(--glass-md)"><div style="display:flex;align-items:center"><div style="flex:1;font-size:14px;font-weight:700;color:var(--accent)">Total</div><div style="display:flex;gap:6px">${players.map((p,i)=>`<div style="width:72px;text-align:center"><div style="font-size:22px;font-weight:700" id="cat-total-${p.id}">${totals[i]}</div><div style="font-size:10px;color:var(--text-2)">${p.name}</div></div>`).join('')}</div></div></div>
+    <div class="card score-total-live" style="background:var(--glass-md)"><div style="display:flex;align-items:center"><div style="flex:1;font-size:14px;font-weight:700;color:var(--accent)">Total</div><div style="display:flex;gap:6px">${players.map((p,i)=>`<div style="width:72px;text-align:center"><div style="font-size:22px;font-weight:700" id="cat-total-${p.id}">${totals[i]}</div><div style="font-size:10px;color:var(--text-2)">${p.name}</div></div>`).join('')}</div></div></div>
     <div class="manche-footer"><button class="btn btn-primary btn-full" onclick="finishGame('viva_catrina')">Voir les résultats</button></div>
   </div>`;
 }
@@ -3186,37 +3242,219 @@ function finishGame(gameId) {
 //  SHOW RESULTS
 // ============================================================
 function showResults(results) {
-  document.getElementById('res-title').textContent = session.gameName;
-  document.getElementById('res-sub').textContent = new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
-
-  const medals = ['1er', '2e', '3e'];
-  const barCls = ['p1', 'p2', 'p3', 'pN'];
-  let disp = [...results];
-  if (disp.length >= 3) { const [f, s, t, ...r] = disp; disp = [s, f, t, ...r]; }
-  document.getElementById('podium').innerHTML = disp.slice(0, 4).map(r => {
-    const rank = results.indexOf(r);
-    return `<div class="podium-item">
-      <div class="podium-bar ${barCls[rank] || 'pN'}">
-        <div class="podium-medal">${medals[rank] || ''}</div>
-        <div class="podium-score">${r.total}</div>
-      </div>
-      <div class="podium-name">${r.name}</div>
-    </div>`;
-  }).join('');
-
-  document.getElementById('full-results').innerHTML = `
-    <hr style="border:none;border-top:1px solid rgba(255,255,255,.1);margin:8px 0 12px">
-    ${results.map((r, i) => `
-      <div style="display:flex;align-items:center;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.05)">
-        <span style="width:28px;font-size:16px">${medals[i] || (i + 1) + '.'}</span>
-        <span style="flex:1;font-size:14px;font-weight:500">${r.name}</span>
-        <span style="font-size:16px;font-weight:700;color:${i === 0 ? 'var(--green)' : 'var(--text)'}">${r.total} pts</span>
-      </div>`).join('')}`;
-
-  showView('results');
-  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-  launchConfetti();
+  session.results = results;
+  session.finished = true;
+  const game = GAMES[session.gameId];
+  if (game && game.reveal === true) {
+    launchReveal(results);
+  } else {
+    launchSimplePodium(results);
+  }
 }
+
+function launchSimplePodium(results) {
+  const overlay = document.createElement('div');
+  overlay.className = 'reveal-overlay';
+  overlay.id = 'reveal-overlay';
+  const rankLabels  = ['🥇','🥈','🥉'];
+  const rankClasses = ['gold','silver','bronze','other'];
+  overlay.innerHTML = `
+    <div class="reveal-game-name">${session.gameName}</div>
+    <div class="reveal-title">Résultats de la partie</div>
+    <div class="reveal-cards" style="width:100%;max-width:420px">
+      ${results.map((r, rank) => {
+        const rankCls   = rankClasses[rank] || 'other';
+        const rankLabel = rankLabels[rank]  || (rank+1)+'.';
+        return \`<div class="reveal-card\${rank===0?' first':''}" id="sp-card-\${rank}" style="opacity:0;transform:translateY(20px)">
+          <div class="reveal-rank \${rankCls}">\${rankLabel}</div>
+          <div class="reveal-name">\${r.name}</div>
+          <div class="reveal-score" id="sp-score-\${rank}">\${r.total}</div>
+        </div>\`;
+      }).join('')}
+    </div>
+    <div class="reveal-buttons" id="sp-btns" style="max-width:420px;opacity:0;transition:opacity .5s">
+      <button class="btn btn-glass" style="flex:1" onclick="closeReveal();newGame()">Nouvelle partie</button>
+      <button class="btn btn-primary" style="flex:1" onclick="closeReveal();saveAndFinish()">Sauvegarder</button>
+    </div>`;
+
+  document.body.appendChild(overlay);
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+
+  // Apparition rapide de toutes les cartes
+  results.forEach((r, rank) => {
+    setTimeout(() => {
+      const card = document.getElementById('sp-card-' + rank);
+      if (card) { card.style.transition = 'opacity .4s ease, transform .4s ease'; card.style.opacity='1'; card.style.transform='translateY(0)'; }
+      if (rank === 0) {
+        const scoreEl = document.getElementById('sp-score-0');
+        if (scoreEl) scoreEl.classList.add('final-gold');
+      }
+    }, 150 * rank + 200);
+  });
+
+  setTimeout(() => {
+    const btns = document.getElementById('sp-btns');
+    if (btns) btns.style.opacity = '1';
+    launchConfetti();
+  }, results.length * 150 + 500);
+}
+
+function launchReveal(results) {
+  const overlay = document.createElement('div');
+  overlay.className = 'reveal-overlay';
+  overlay.id = 'reveal-overlay';
+
+  const n = results.length;
+  // Ordre : du dernier au premier
+  const revealOrder = [...results].reverse();
+  const rankLabels  = ['🥇','🥈','🥉'];
+  const rankClasses = ['gold','silver','bronze','other'];
+
+  // Séparation : au-delà du top 3 vs top 3
+  const others  = revealOrder.filter((r) => results.indexOf(r) >= 3);  // 4e, 5e...
+  const podium3 = revealOrder.filter((r) => results.indexOf(r) <  3);  // 3e, 2e, 1er (dans cet ordre)
+
+  overlay.innerHTML = `
+    <div class="reveal-game-name" id="rev-game-name">${session.gameName}</div>
+    <div class="reveal-title" id="rev-title">Résultats de la partie</div>
+
+    <!-- Autres (4e et +) -->
+    <div class="reveal-cards" id="rev-others" style="width:100%;max-width:420px">
+      ${others.map((r) => {
+        const rank = results.indexOf(r);
+        const rankCls   = rankClasses[rank] || 'other';
+        const rankLabel = (rank + 1) + '.';
+        return \`<div class="reveal-card" id="rev-card-\${rank}">
+          <div class="reveal-rank \${rankCls}">\${rankLabel}</div>
+          <div class="reveal-name">\${r.name}</div>
+          <div class="reveal-score counting" id="rev-score-\${rank}">0</div>
+        </div>\`;
+      }).join('')}
+    </div>
+
+    <!-- Spotlight podium (caché au départ) -->
+    <div id="rev-spotlight" style="display:none;position:fixed;inset:0;z-index:2001;background:#000;flex-direction:column;align-items:center;justify-content:center;padding:24px">
+      <div class="reveal-game-name" style="margin-bottom:6px">${session.gameName}</div>
+      <div class="reveal-title" style="margin-bottom:20px">🏆 Podium</div>
+      <div style="width:100%;max-width:420px;display:flex;flex-direction:column;gap:12px" id="rev-podium-cards">
+        ${podium3.map((r) => {
+          const rank = results.indexOf(r);
+          const rankCls   = rankClasses[rank] || 'other';
+          const rankLabel = rankLabels[rank] || '';
+          return \`<div class="reveal-card\${rank===0?' first':''}" id="rev-pod-\${rank}" style="opacity:0;transform:translateY(30px)">
+            <div class="reveal-rank \${rankCls}">\${rankLabel}</div>
+            <div class="reveal-name" style="font-size:\${rank===0?'22px':'18px'}">\${r.name}</div>
+            <div class="reveal-score counting" id="rev-pod-score-\${rank}">0</div>
+          </div>\`;
+        }).join('')}
+      </div>
+      <div class="reveal-buttons" id="rev-btns" style="max-width:420px">
+        <button class="btn btn-glass" style="flex:1" onclick="closeReveal();newGame()">Nouvelle partie</button>
+        <button class="btn btn-primary" style="flex:1" onclick="closeReveal();saveAndFinish()">Sauvegarder</button>
+      </div>
+    </div>`;
+
+  document.body.appendChild(overlay);
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+
+  // ---- PHASE 1 : Révélation des autres (4e, 5e...) un par un ----
+  let delay = 400;
+  others.forEach((r) => {
+    const rank = results.indexOf(r);
+    setTimeout(() => {
+      const card = document.getElementById('rev-card-' + rank);
+      if (card) card.classList.add('show');
+      animateScore('rev-score-' + rank, r.total, 700, false);
+    }, delay);
+    delay += 900;
+  });
+
+  // ---- PHASE 2 : Transition vers le spotlight podium ----
+  const spotlightDelay = delay + 600;
+  setTimeout(() => {
+    // Fondu noir sur les autres
+    const othersDiv = document.getElementById('rev-others');
+    const gameName  = document.getElementById('rev-game-name');
+    const title     = document.getElementById('rev-title');
+    if (othersDiv) { othersDiv.style.transition = 'opacity .8s'; othersDiv.style.opacity = '0'; }
+    if (gameName)  { gameName.style.transition  = 'opacity .8s'; gameName.style.opacity  = '0'; }
+    if (title)     { title.style.transition     = 'opacity .8s'; title.style.opacity     = '0'; }
+
+    setTimeout(() => {
+      // Afficher le spotlight
+      const spot = document.getElementById('rev-spotlight');
+      if (spot) { spot.style.display = 'flex'; }
+
+      // ---- PHASE 3 : Podium 3e → 2e → 1er ----
+      let podDelay = 300;
+      podium3.forEach((r) => {
+        const rank = results.indexOf(r);
+        const isWinner = rank === 0;
+        // Durée compteur : très lente pour le 1er (suspense)
+        const dur = isWinner ? 2200 : 900;
+
+        setTimeout(() => {
+          const card = document.getElementById('rev-pod-' + rank);
+          if (card) {
+            card.style.transition = 'opacity .6s ease, transform .6s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+          }
+          animateScore('rev-pod-score-' + rank, r.total, dur, isWinner);
+
+          // Confettis + glow sur le 1er
+          if (isWinner) {
+            setTimeout(() => {
+              launchConfetti();
+              const card1 = document.getElementById('rev-pod-0');
+              if (card1) {
+                card1.style.transition = 'box-shadow .5s ease';
+                card1.style.boxShadow = '0 0 80px rgba(255,214,10,.5)';
+              }
+              // Afficher les boutons
+              setTimeout(() => {
+                const btns = document.getElementById('rev-btns');
+                if (btns) btns.classList.add('show');
+              }, 800);
+            }, dur + 300);
+          }
+        }, podDelay);
+
+        podDelay += isWinner ? 1200 : 1400;
+      });
+    }, 900);
+  }, spotlightDelay);
+}
+
+function animateScore(elemId, target, duration, isWinner) {
+  const el = document.getElementById(elemId);
+  if (!el) return;
+  const start = performance.now();
+  const isNeg = target < 0;
+  const abs   = Math.abs(target);
+  function update(now) {
+    const t = Math.min((now - start) / duration, 1);
+    // Easing : très rapide au début, très lent à la fin
+    const eased = isWinner
+      ? 1 - Math.pow(1 - t, 5)   // quintic pour le gagnant = encore plus spectaculaire
+      : 1 - Math.pow(1 - t, 3);  // cubic pour les autres
+    el.textContent = (isNeg ? '-' : '') + Math.round(eased * abs);
+    if (t < 1) { requestAnimationFrame(update); }
+    else {
+      el.textContent = target;
+      el.classList.remove('counting');
+      if (isWinner) el.classList.add('final-gold');
+    }
+  }
+  requestAnimationFrame(update);
+}
+
+function closeReveal() {
+  const o = document.getElementById('reveal-overlay');
+  if (o) o.remove();
+}
+
+
 
 function saveAndFinish() {
   if (!session) return;
@@ -3582,11 +3820,25 @@ function renderAdminGames() {
             id="admin-maxp-${g.id}" min="1" max="20"
             onchange="saveGameOverride('${g.id}')">
         </div>
-        <div class="admin-field-row" style="margin-bottom:0">
+        <div class="admin-field-row">
           <div class="admin-label">Lien PDF des règles</div>
           <input class="field" style="font-size:12px;padding:8px 12px" value="${rulesUrl}"
             id="admin-rules-${g.id}" placeholder="https://..."
             onchange="saveGameOverride('${g.id}')">
+        </div>
+        <div class="admin-field-row" style="margin-bottom:0">
+          <div class="toggle-row">
+            <div>
+              <div class="admin-label" style="margin-bottom:2px">Animation reveal podium</div>
+              <div style="font-size:11px;color:var(--text-3)">Désactiver pour les jeux avec scores visibles (Flip 7, Skull King...)</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="admin-reveal-${g.id}"
+                ${(ov.reveal !== undefined ? ov.reveal : g.reveal) !== false ? 'checked' : ''}
+                onchange="saveGameOverride('${g.id}')">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
         </div>
       </div>`;
     }).join('');
@@ -3606,11 +3858,13 @@ function saveGameBanner(gameId, url) {
 }
 
 function saveGameOverride(gameId) {
-  const name  = document.getElementById('admin-name-' + gameId)?.value.trim();
-  const desc  = document.getElementById('admin-desc-' + gameId)?.value.trim();
-  const maxP  = parseInt(document.getElementById('admin-maxp-' + gameId)?.value) || GAMES[gameId].maxPlayers;
-  const rules = document.getElementById('admin-rules-' + gameId)?.value.trim();
-  const data  = { name, desc, maxPlayers: maxP, rules };
+  const name   = document.getElementById('admin-name-'   + gameId)?.value.trim();
+  const desc   = document.getElementById('admin-desc-'   + gameId)?.value.trim();
+  const maxP   = parseInt(document.getElementById('admin-maxp-'  + gameId)?.value) || GAMES[gameId].maxPlayers;
+  const rules  = document.getElementById('admin-rules-'  + gameId)?.value.trim();
+  const revEl  = document.getElementById('admin-reveal-' + gameId);
+  const reveal = revEl ? revEl.checked : GAMES[gameId].reveal;
+  const data  = { name, desc, maxPlayers: maxP, rules, reveal };
   db.ref(REF + '/game_overrides/' + gameId).set(data).then(() => {
     // Appliquer localement
     if (name)  GAMES[gameId].name = name;
@@ -3642,10 +3896,11 @@ function loadGameImages() {
     Object.keys(ovs).forEach(id => {
       if (!GAMES[id]) return;
       const ov = ovs[id];
-      if (ov.name)       GAMES[id].name       = ov.name;
-      if (ov.desc)       GAMES[id].desc       = ov.desc;
-      if (ov.maxPlayers) GAMES[id].maxPlayers = ov.maxPlayers;
-      if (ov.rules)      GAMES[id].rules      = ov.rules;
+      if (ov.name)                GAMES[id].name       = ov.name;
+      if (ov.desc)                GAMES[id].desc       = ov.desc;
+      if (ov.maxPlayers)          GAMES[id].maxPlayers = ov.maxPlayers;
+      if (ov.rules)               GAMES[id].rules      = ov.rules;
+      if (ov.reveal !== undefined) GAMES[id].reveal    = ov.reveal;
     });
     renderGameGrid();
   });
