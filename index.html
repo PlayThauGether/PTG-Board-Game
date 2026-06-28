@@ -1753,7 +1753,7 @@ function showResults(results) {
         <div class="podium-medal">${medals[rank] || ''}</div>
         <div class="podium-score">${r.total}</div>
       </div>
-      <div class="podium-name">${r.name</div>
+      <div class="podium-name">${r.name}</div>
     </div>`;
   }).join('');
 
@@ -1762,7 +1762,7 @@ function showResults(results) {
     ${results.map((r, i) => `
       <div style="display:flex;align-items:center;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.05)">
         <span style="width:28px;font-size:16px">${medals[i] || (i + 1) + '.'}</span>
-        <span style="flex:1;font-size:14px;font-weight:500">${r.name</span>
+        <span style="flex:1;font-size:14px;font-weight:500">${r.name}</span>
         <span style="font-size:16px;font-weight:700;color:${i === 0 ? 'var(--green)' : 'var(--text)'}">${r.total} pts</span>
       </div>`).join('')}`;
 
@@ -1827,7 +1827,7 @@ function showDetail(id) {
     ${s.results ? s.results.map((r, i) => `
       <div style="display:flex;align-items:center;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.07)">
         <span style="font-size:18px;width:30px">${medals[i] || (i + 1) + '.'}</span>
-        <span style="flex:1;font-size:14px">${r.name</span>
+        <span style="flex:1;font-size:14px">${r.name}</span>
         <strong style="color:${i === 0 ? 'var(--green)' : 'var(--text)'}">${r.total} pts</strong>
       </div>`).join('') : '<div style="color:var(--text-2)">Aucun résultat</div>'}`;
   document.getElementById('modal-detail').classList.add('open');
