@@ -554,7 +554,17 @@ body::before {
 .auth-user-btn:hover { background: var(--glass-hi); }
 .auth-user-name { font-size: 12px; font-weight: 500; color: var(--text); max-width: 90px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-/* ---- ADMIN ---- */
+/* ---- ADMIN PAGE ---- */
+.admin-game-row { display:flex;flex-direction:column;gap:8px;padding:14px 0;border-bottom:1px solid rgba(255,255,255,.08); }
+.admin-game-row:last-child { border-bottom:none; }
+.admin-game-name { font-size:14px;font-weight:600;color:var(--text); }
+.admin-img-preview { width:56px;height:56px;object-fit:cover;border-radius:8px;border:1px solid var(--border);flex-shrink:0; }
+.admin-row-inner { display:flex;align-items:flex-start;gap:10px; }
+.admin-img-placeholder { width:56px;height:56px;background:var(--glass-md);border-radius:8px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:var(--text-2);flex-shrink:0; }
+.admin-label { font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-2);margin-bottom:4px; }
+.admin-settings-card { background:var(--glass);border:1px solid var(--border);border-radius:var(--r-lg);padding:14px;margin-bottom:10px; }
+.admin-settings-title { font-size:14px;font-weight:700;color:var(--text);margin-bottom:12px; }
+.admin-field-row { margin-bottom:10px; }
 .admin-game-row { display:flex;flex-direction:column;gap:6px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.08); }
 .admin-game-row:last-child { border-bottom:none; }
 .admin-game-name { font-size:13px;font-weight:600;color:var(--text); }
@@ -702,18 +712,50 @@ body::before {
 </div>
 
 <!-- MODAL: admin panel -->
-<div class="modal-overlay" id="modal-admin">
-  <div class="modal">
-    <div class="modal-handle"></div>
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-      <div class="modal-title" style="margin:0">Admin — Images des jeux</div>
-      <button class="btn btn-danger btn-sm" onclick="signOutAdmin()">Déconnexion</button>
+<!-- VUE ADMIN (pleine page, cachée par défaut) -->
+<div id="view-admin" style="display:none;position:fixed;inset:0;z-index:500;background:var(--bg-1);overflow-y:auto">
+  <div style="max-width:480px;margin:0 auto;padding:max(env(safe-area-inset-top),20px) 20px 80px">
+
+    <!-- Header admin -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 0 20px">
+      <div>
+        <div style="font-size:20px;font-weight:700;color:var(--text)">Administration</div>
+        <div style="font-size:12px;color:var(--text-2);margin-top:2px" id="admin-user-label"></div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-glass btn-sm" onclick="closeAdminPage()">← Retour</button>
+        <button class="btn btn-danger btn-sm" onclick="signOutAdmin()">Déconnexion</button>
+      </div>
     </div>
-    <p style="font-size:12px;color:var(--text-2);margin-bottom:16px">Colle l'URL de l'image pour chaque jeu. Elle sera sauvegardée sur Firebase.</p>
-    <div id="admin-games-list"></div>
-    <div class="modal-actions">
-      <button class="btn btn-glass btn-sm" onclick="closeModal('modal-admin')">Fermer</button>
+
+    <!-- 2 boutons sections -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px">
+      <button onclick="showAdminSection('images')" id="admin-tab-images"
+        class="btn btn-primary" style="flex-direction:column;gap:4px;padding:14px;border-radius:var(--r-lg)">
+        <span style="font-size:18px">🖼️</span>
+        <span style="font-size:13px">Images des jeux</span>
+      </button>
+      <button onclick="showAdminSection('games')" id="admin-tab-games"
+        class="btn btn-glass" style="flex-direction:column;gap:4px;padding:14px;border-radius:var(--r-lg)">
+        <span style="font-size:18px">⚙️</span>
+        <span style="font-size:13px">Gérer les jeux</span>
+      </button>
     </div>
+
+    <!-- Section Images -->
+    <div id="admin-section-images">
+      <div class="section-title" style="margin-bottom:10px">Images des jeux</div>
+      <p style="font-size:12px;color:var(--text-2);margin-bottom:14px">Colle les URLs d'images. Sauvegardées automatiquement sur Firebase.</p>
+      <div id="admin-games-list"></div>
+    </div>
+
+    <!-- Section Gérer les jeux -->
+    <div id="admin-section-games" style="display:none">
+      <div class="section-title" style="margin-bottom:10px">Gérer les jeux</div>
+      <p style="font-size:12px;color:var(--text-2);margin-bottom:14px">Modifie les infos de chaque jeu. Sauvegardées sur Firebase.</p>
+      <div id="admin-games-settings"></div>
+    </div>
+
   </div>
 </div>
 
@@ -2860,13 +2902,12 @@ function signInGoogle() {
 function signOutAdmin() {
   auth.signOut().then(() => {
     adminUser = null;
-    closeModal('modal-admin');
+    closeAdminPage();
     toast('Déconnecté');
   });
 }
 
 function openAdminPanel() {
-  // Vérifier que c'est bien l'admin
   db.ref(REF + '/admin_email').once('value', snap => {
     const adminEmail = snap.val();
     if (adminEmail && adminUser.email !== adminEmail) {
@@ -2874,13 +2915,29 @@ function openAdminPanel() {
       auth.signOut();
       return;
     }
-    renderAdminPanel();
-    document.getElementById('modal-admin').classList.add('open');
+    // Afficher la page admin
+    document.getElementById('admin-user-label').textContent = adminUser.email;
+    document.getElementById('view-admin').style.display = 'block';
+    showAdminSection('images');
   });
 }
 
-function renderAdminPanel() {
-  // Charger les images depuis Firebase
+function closeAdminPage() {
+  document.getElementById('view-admin').style.display = 'none';
+}
+
+function showAdminSection(section) {
+  document.getElementById('admin-section-images').style.display = section === 'images' ? 'block' : 'none';
+  document.getElementById('admin-section-games').style.display  = section === 'games'  ? 'block' : 'none';
+  document.getElementById('admin-tab-images').className = 'btn ' + (section === 'images' ? 'btn-primary' : 'btn-glass');
+  document.getElementById('admin-tab-games').className  = 'btn ' + (section === 'games'  ? 'btn-primary' : 'btn-glass');
+  document.getElementById('admin-tab-images').style.cssText = 'flex-direction:column;gap:4px;padding:14px;border-radius:var(--r-lg)';
+  document.getElementById('admin-tab-games').style.cssText  = 'flex-direction:column;gap:4px;padding:14px;border-radius:var(--r-lg)';
+  if (section === 'images') renderAdminImages();
+  if (section === 'games')  renderAdminGames();
+}
+
+function renderAdminImages() {
   db.ref(REF + '/game_images').once('value', snap => {
     const images = snap.val() || {};
     document.getElementById('admin-games-list').innerHTML = Object.values(GAMES).map(g => {
@@ -2894,17 +2951,59 @@ function renderAdminPanel() {
         <div class="admin-row-inner">
           ${preview}
           <div style="flex:1;display:flex;flex-direction:column;gap:6px">
-            <input class="field" style="font-size:12px;padding:7px 12px"
-              placeholder="URL image vignette (game card)..."
-              value="${currentImg}"
-              id="admin-img-${g.id}"
-              onchange="saveGameImage('${g.id}', this.value)">
-            <input class="field" style="font-size:12px;padding:7px 12px"
-              placeholder="URL image bannière (écran de score)..."
-              value="${currentBanner}"
-              id="admin-banner-${g.id}"
-              onchange="saveGameBanner('${g.id}', this.value)">
+            <div>
+              <div class="admin-label">Vignette (game card)</div>
+              <input class="field" style="font-size:12px;padding:7px 12px"
+                placeholder="URL image..." value="${currentImg}"
+                id="admin-img-${g.id}" onchange="saveGameImage('${g.id}', this.value)">
+            </div>
+            <div>
+              <div class="admin-label">Bannière (écran de score · 440×160px)</div>
+              <input class="field" style="font-size:12px;padding:7px 12px"
+                placeholder="URL image..." value="${currentBanner}"
+                id="admin-banner-${g.id}" onchange="saveGameBanner('${g.id}', this.value)">
+            </div>
           </div>
+        </div>
+      </div>`;
+    }).join('');
+  });
+}
+
+function renderAdminGames() {
+  db.ref(REF + '/game_overrides').once('value', snap => {
+    const overrides = snap.val() || {};
+    document.getElementById('admin-games-settings').innerHTML = Object.values(GAMES).map(g => {
+      const ov = overrides[g.id] || {};
+      const name     = ov.name     || g.name;
+      const desc     = ov.desc     || g.desc;
+      const maxP     = ov.maxPlayers !== undefined ? ov.maxPlayers : g.maxPlayers;
+      const rulesUrl = ov.rules    || g.rules || '';
+      return `<div class="admin-settings-card">
+        <div class="admin-settings-title">${g.name}</div>
+        <div class="admin-field-row">
+          <div class="admin-label">Titre du jeu</div>
+          <input class="field" style="font-size:13px;padding:8px 12px" value="${name}"
+            id="admin-name-${g.id}" placeholder="Nom du jeu..."
+            onchange="saveGameOverride('${g.id}')">
+        </div>
+        <div class="admin-field-row">
+          <div class="admin-label">Sous-titre / description</div>
+          <input class="field" style="font-size:13px;padding:8px 12px" value="${desc}"
+            id="admin-desc-${g.id}" placeholder="Description courte..."
+            onchange="saveGameOverride('${g.id}')">
+        </div>
+        <div class="admin-field-row">
+          <div class="admin-label">Nombre max de joueurs</div>
+          <input class="field" style="font-size:13px;padding:8px 12px;width:100px" type="number" value="${maxP}"
+            id="admin-maxp-${g.id}" min="1" max="20"
+            onchange="saveGameOverride('${g.id}')">
+        </div>
+        <div class="admin-field-row" style="margin-bottom:0">
+          <div class="admin-label">Lien PDF des règles</div>
+          <input class="field" style="font-size:12px;padding:8px 12px" value="${rulesUrl}"
+            id="admin-rules-${g.id}" placeholder="https://..."
+            onchange="saveGameOverride('${g.id}')">
         </div>
       </div>`;
     }).join('');
@@ -2913,7 +3012,7 @@ function renderAdminPanel() {
 
 function saveGameImage(gameId, url) {
   db.ref(REF + '/game_images/' + gameId).set(url.trim())
-    .then(() => { toast('Image sauvegardée !'); renderGameGrid(); })
+    .then(() => { GAMES[gameId].img = url.trim(); toast('Image sauvegardée !'); renderGameGrid(); })
     .catch(() => toast('Erreur sauvegarde'));
 }
 
@@ -2921,6 +3020,23 @@ function saveGameBanner(gameId, url) {
   db.ref(REF + '/game_images/' + gameId + '_banner').set(url.trim())
     .then(() => { GAMES[gameId].img_banner = url.trim(); toast('Bannière sauvegardée !'); })
     .catch(() => toast('Erreur sauvegarde'));
+}
+
+function saveGameOverride(gameId) {
+  const name  = document.getElementById('admin-name-' + gameId)?.value.trim();
+  const desc  = document.getElementById('admin-desc-' + gameId)?.value.trim();
+  const maxP  = parseInt(document.getElementById('admin-maxp-' + gameId)?.value) || GAMES[gameId].maxPlayers;
+  const rules = document.getElementById('admin-rules-' + gameId)?.value.trim();
+  const data  = { name, desc, maxPlayers: maxP, rules };
+  db.ref(REF + '/game_overrides/' + gameId).set(data).then(() => {
+    // Appliquer localement
+    if (name)  GAMES[gameId].name = name;
+    if (desc)  GAMES[gameId].desc = desc;
+    GAMES[gameId].maxPlayers = maxP;
+    if (rules) GAMES[gameId].rules = rules;
+    toast('Jeu mis à jour !');
+    renderGameGrid();
+  });
 }
 
 // Charger les images depuis Firebase au démarrage
@@ -2934,6 +3050,19 @@ function loadGameImages() {
       } else {
         if (GAMES[key]) GAMES[key].img = imgs[key];
       }
+    });
+    renderGameGrid();
+  });
+  // Charger les overrides (nom, desc, maxJoueurs, règles)
+  db.ref(REF + '/game_overrides').on('value', snap => {
+    const ovs = snap.val() || {};
+    Object.keys(ovs).forEach(id => {
+      if (!GAMES[id]) return;
+      const ov = ovs[id];
+      if (ov.name)       GAMES[id].name       = ov.name;
+      if (ov.desc)       GAMES[id].desc       = ov.desc;
+      if (ov.maxPlayers) GAMES[id].maxPlayers = ov.maxPlayers;
+      if (ov.rules)      GAMES[id].rules      = ov.rules;
     });
     renderGameGrid();
   });
