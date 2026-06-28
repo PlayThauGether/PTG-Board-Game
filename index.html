@@ -538,44 +538,6 @@ body::before {
 .counter-reset { font-size: 11px; color: var(--text-3); margin-top: 4px; cursor: pointer; background: none; border: none; font-family: inherit; }
 .counter-reset:hover { color: var(--text-2); }
 
-/* ---- CROP MODAL ---- */
-.crop-modal-overlay {
-  display: none; position: fixed; inset: 0;
-  background: rgba(5,8,20,.9); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-  z-index: 2000; align-items: center; justify-content: center; padding: 16px;
-}
-.crop-modal-overlay.open { display: flex; }
-.crop-modal {
-  background: rgba(15,22,41,.98); border: 1px solid var(--border);
-  border-radius: var(--r-xl); padding: 20px;
-  width: 100%; max-width: 480px;
-}
-.crop-modal-title { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
-.crop-modal-sub { font-size: 12px; color: var(--text-2); margin-bottom: 14px; }
-.crop-viewport {
-  width: 100%; height: 160px;
-  border-radius: var(--r); overflow: hidden;
-  border: 1px solid var(--border);
-  position: relative; cursor: grab; background: #0d1117;
-  touch-action: none;
-}
-.crop-viewport:active { cursor: grabbing; }
-.crop-img {
-  position: absolute;
-  transform-origin: 0 0;
-  pointer-events: none;
-  user-select: none;
-  -webkit-user-drag: none;
-  max-width: none;
-}
-.crop-controls { display: flex; align-items: center; gap: 10px; margin: 12px 0; }
-.crop-zoom-label { font-size: 12px; color: var(--text-2); white-space: nowrap; }
-.crop-zoom-slider { flex: 1; accent-color: var(--accent); }
-.crop-zoom-val { font-size: 12px; color: var(--accent); min-width: 36px; text-align: right; font-weight: 600; }
-.crop-actions { display: flex; gap: 8px; }
-.crop-reset { font-size: 12px; color: var(--text-2); background: none; border: 1px solid var(--border); border-radius: var(--r); padding: 7px 12px; cursor: pointer; }
-.crop-reset:hover { border-color: var(--text-2); }
-
 /* ---- ADMIN ---- */
 .admin-game-row { display:flex;flex-direction:column;gap:6px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.08); }
 .admin-game-row:last-child { border-bottom:none; }
@@ -727,27 +689,6 @@ body::before {
     <div id="admin-games-list"></div>
     <div class="modal-actions">
       <button class="btn btn-glass btn-sm" onclick="closeModal('modal-admin')">Fermer</button>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL: recadrage image -->
-<div class="crop-modal-overlay" id="modal-crop">
-  <div class="crop-modal">
-    <div class="crop-modal-title" id="crop-title">Recadrer l'image</div>
-    <div class="crop-modal-sub">Glisse pour déplacer · Zoom avec le curseur</div>
-    <div class="crop-viewport" id="crop-viewport">
-      <img class="crop-img" id="crop-img" src="" draggable="false">
-    </div>
-    <div class="crop-controls">
-      <span class="crop-zoom-label">Zoom</span>
-      <input type="range" class="crop-zoom-slider" id="crop-zoom" min="0.5" max="3" step="0.05" value="1">
-      <span class="crop-zoom-val" id="crop-zoom-val">100%</span>
-    </div>
-    <div class="crop-actions">
-      <button class="crop-reset" onclick="cropReset()">↺ Réinitialiser</button>
-      <button class="btn btn-glass btn-sm" style="flex:1" onclick="closeModal('modal-crop')">Annuler</button>
-      <button class="btn btn-primary btn-sm" style="flex:1" onclick="cropSave()">Appliquer</button>
     </div>
   </div>
 </div>
@@ -960,11 +901,7 @@ function showView(name) {
 // ============================================================
 function renderGameGrid() {
   document.getElementById('game-grid').innerHTML = Object.values(GAMES).map(g => {
-    const cropC = g.crop_card;
-    const bgCard = cropBgStyle(cropC);
-    const bgStyle = g.img
-      ? `background-image:url('${g.img}');background-position:${bgCard.pos};background-size:${bgCard.size}`
-      : '';
+    const bgStyle = g.img ? `background-image:url('${g.img}')` : '';
     return `<div class="game-card" id="gc-${g.id}" onclick="selectGame('${g.id}')">
       <div class="game-card-bg" style="${bgStyle}"></div>
       <div class="game-card-overlay"></div>
@@ -1663,17 +1600,7 @@ function updateSW(pid, field, val) {
 // ============================================================
 //  HELPER — génère le HTML du hero bandeau
 // ============================================================
-function cropBgStyle(params) {
-  // Convertit x/y/zoom en background-position et background-size
-  if (!params) return { pos: 'center', size: 'cover' };
-  const { x=0, y=0, zoom=1 } = params;
-  // zoom → background-size en %
-  const sizeVal = Math.round(zoom * 100) + '%';
-  // x/y → background-position (offset depuis le coin, inversé car on déplace l'image)
-  const posX = 'calc(50% + ' + x + 'px)';
-  const posY = 'calc(50% + ' + y + 'px)';
-  return { pos: posX + ' ' + posY, size: sizeVal + ' auto' };
-}
+
 
 function gameHeroHTML(gameId, subtitle, navHTML) {
   const g = GAMES[gameId];
@@ -1681,12 +1608,10 @@ function gameHeroHTML(gameId, subtitle, navHTML) {
   const thumb  = g?.img || '';
   const hasBanner = !!banner;
   const bgSrc  = banner || thumb;
-  const cropP  = hasBanner ? (g?.crop_banner || null) : (g?.crop_card || null);
   const filter = hasBanner ? 'brightness(.75)' : 'blur(8px) brightness(.35) saturate(1.5)';
-  const bg = cropBgStyle(cropP);
   return `
     <div class="game-hero${hasBanner ? ' has-banner' : ''}" style="margin-bottom:12px">
-      ${bgSrc ? `<div class="game-hero-bg" style="background-image:url('${bgSrc}');background-position:${bg.pos};background-size:${bg.size};filter:${filter}"></div>` : ''}
+      ${bgSrc ? `<div class="game-hero-bg" style="background-image:url('${bgSrc}');filter:${filter}"></div>` : ''}
       <div class="game-hero-overlay" style="${hasBanner ? 'background:linear-gradient(to bottom, rgba(0,0,0,.05) 0%, rgba(0,0,0,.55) 100%)' : ''}"></div>
       <div class="game-hero-content">
         <div class="game-hero-left">
@@ -2361,21 +2286,11 @@ function renderAdminPanel() {
               value="${currentImg}"
               id="admin-img-${g.id}"
               onchange="saveGameImage('${g.id}', this.value)">
-            <div style="display:flex;gap:6px;align-items:center">
-              <input class="field" style="font-size:12px;padding:7px 12px;flex:1"
-                placeholder="URL image bannière (écran de score)..."
-                value="${currentBanner}"
-                id="admin-banner-${g.id}"
-                onchange="saveGameBanner('${g.id}', this.value)">
-              ${currentBanner ? `<button class="btn btn-glass btn-sm" style="font-size:11px;white-space:nowrap;flex-shrink:0"
-                onclick="openCrop('${g.id}', 'banner', '${currentBanner}')">✂ Recadrer</button>` : ''}
-            </div>
-            <div style="display:flex;gap:6px;align-items:center">
-              <div style="flex:1"></div>
-              <button class="btn btn-glass btn-sm" style="font-size:11px;white-space:nowrap"
-                onclick="openCrop('${g.id}', 'card', document.getElementById('admin-img-${g.id}').value)"
-                ${currentImg ? '' : 'disabled style="opacity:.4"'}>✂ Recadrer vignette</button>
-            </div>
+            <input class="field" style="font-size:12px;padding:7px 12px"
+              placeholder="URL image bannière (écran de score)..."
+              value="${currentBanner}"
+              id="admin-banner-${g.id}"
+              onchange="saveGameBanner('${g.id}', this.value)">
           </div>
         </div>
       </div>`;
@@ -2411,145 +2326,7 @@ function loadGameImages() {
   });
 }
 
-// ============================================================
-//  CROP — recadrage image
-// ============================================================
-let cropState = {
-  gameId: null, type: null, // 'banner' ou 'card'
-  x: 0, y: 0, zoom: 1,
-  dragging: false, startX: 0, startY: 0, startImgX: 0, startImgY: 0,
-  imgW: 0, imgH: 0
-};
 
-function openCrop(gameId, type, url) {
-  if (!url) return toast("Colle d'abord une URL d'image");
-  cropState.gameId = gameId;
-  cropState.type = type;
-  // Charger les params sauvegardés si existants
-  const saved = GAMES[gameId]?.['crop_' + type] || { x:0, y:0, zoom:1 };
-  cropState.x = saved.x || 0;
-  cropState.y = saved.y || 0;
-  cropState.zoom = saved.zoom || 1;
-
-  const title = type === 'banner' ? 'Bannière — ' : 'Vignette — ';
-  document.getElementById('crop-title').textContent = title + GAMES[gameId].name;
-  document.getElementById('crop-zoom').value = cropState.zoom;
-  document.getElementById('crop-zoom-val').textContent = Math.round(cropState.zoom * 100) + '%';
-
-  const img = document.getElementById('crop-img');
-  img.onload = () => {
-    cropState.imgW = img.naturalWidth;
-    cropState.imgH = img.naturalHeight;
-    applyCropTransform();
-  };
-  img.src = url;
-  document.getElementById('modal-crop').classList.add('open');
-  initCropEvents();
-}
-
-function applyCropTransform() {
-  const img = document.getElementById('crop-img');
-  // transform-origin center pour que le zoom soit centré visuellement
-  img.style.transformOrigin = 'center center';
-  img.style.transform = `translate(${cropState.x}px, ${cropState.y}px) scale(${cropState.zoom})`;
-}
-
-function initCropEvents() {
-  const vp = document.getElementById('crop-viewport');
-  const zoom = document.getElementById('crop-zoom');
-
-  // Supprimer anciens listeners
-  vp.onmousedown = e => {
-    cropState.dragging = true;
-    cropState.startX = e.clientX;
-    cropState.startY = e.clientY;
-    cropState.startImgX = cropState.x;
-    cropState.startImgY = cropState.y;
-    e.preventDefault();
-  };
-  window.onmousemove = e => {
-    if (!cropState.dragging) return;
-    cropState.x = cropState.startImgX + (e.clientX - cropState.startX);
-    cropState.y = cropState.startImgY + (e.clientY - cropState.startY);
-    applyCropTransform();
-  };
-  window.onmouseup = () => { cropState.dragging = false; };
-
-  // Touch
-  vp.ontouchstart = e => {
-    const t = e.touches[0];
-    cropState.dragging = true;
-    cropState.startX = t.clientX;
-    cropState.startY = t.clientY;
-    cropState.startImgX = cropState.x;
-    cropState.startImgY = cropState.y;
-    e.preventDefault();
-  };
-  vp.ontouchmove = e => {
-    if (!cropState.dragging) return;
-    const t = e.touches[0];
-    cropState.x = cropState.startImgX + (t.clientX - cropState.startX);
-    cropState.y = cropState.startImgY + (t.clientY - cropState.startY);
-    applyCropTransform();
-    e.preventDefault();
-  };
-  vp.ontouchend = () => { cropState.dragging = false; };
-
-  // Zoom slider
-  zoom.oninput = () => {
-    cropState.zoom = parseFloat(zoom.value);
-    document.getElementById('crop-zoom-val').textContent = Math.round(cropState.zoom * 100) + '%';
-    applyCropTransform();
-  };
-
-  // Scroll to zoom
-  vp.onwheel = e => {
-    e.preventDefault();
-    cropState.zoom = Math.max(0.5, Math.min(3, cropState.zoom - e.deltaY * 0.001));
-    zoom.value = cropState.zoom;
-    document.getElementById('crop-zoom-val').textContent = Math.round(cropState.zoom * 100) + '%';
-    applyCropTransform();
-  };
-}
-
-function cropReset() {
-  cropState.x = 0; cropState.y = 0; cropState.zoom = 1;
-  document.getElementById('crop-zoom').value = 1;
-  document.getElementById('crop-zoom-val').textContent = '100%';
-  applyCropTransform();
-}
-
-function cropSave() {
-  const { gameId, type, x, y, zoom } = cropState;
-  const params = { x, y, zoom };
-  // Sauvegarder les params dans GAMES local
-  if (!GAMES[gameId]) return;
-  GAMES[gameId]['crop_' + type] = params;
-  // Sauvegarder en Firebase
-  db.ref(REF + '/crop_params/' + gameId + '_' + type).set(params)
-    .then(() => toast('Recadrage sauvegardé !'))
-    .catch(() => toast('Erreur sauvegarde'));
-  closeModal('modal-crop');
-  // Forcer le re-render si on est sur l'écran de jeu
-  if (session) renderCurrentManche();
-}
-
-function loadCropParams() {
-  db.ref(REF + '/crop_params').on('value', snap => {
-    const data = snap.val() || {};
-    Object.keys(data).forEach(key => {
-      // key = gameId_type (ex: flip7_banner)
-      const parts = key.split('_');
-      const type = parts.pop(); // banner ou card
-      const gameId = parts.join('_');
-      if (GAMES[gameId]) GAMES[gameId]['crop_' + type] = data[key];
-    });
-  });
-}
-
-init();
-loadGameImages();
-loadCropParams();
 
 // ---- SERVICE WORKER ----
 if ('serviceWorker' in navigator) {
