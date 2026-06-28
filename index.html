@@ -833,6 +833,12 @@ const GAMES_DEF = {
     img:'', img_banner:'' },
   maraudeurs:    { id:'maraudeurs', rules:'https://www.dontpanicgames.com/static/Maraudeurs-Midgard-regles-vf.pdf', name:'Maraudeurs de Midgard',      emoji:'', desc:'Décompte final · 6 tours', maxPlayers: 4,
     img:'', img_banner:'' },
+  narak:         { id:'narak',      rules:'https://iello.fr/wp-content/uploads/2021/01/Narak_Rulebook.pdf',           name:'Ruines Perdues de Narak',   emoji:'', desc:'Décompte final · 5 manches', maxPlayers: 4,
+    img:'', img_banner:'' },
+  citadelles:    { id:'citadelles', rules:'https://cdn.1j1ju.com/medias/cb/4e/c5-citadelles-regle.pdf',               name:'Citadelles',                emoji:'', desc:'7 quartiers · décompte final', maxPlayers: 7,
+    img:'', img_banner:'' },
+  viva_catrina:  { id:'viva_catrina', rules:'https://cdn.blackrockgames.fr/items/FLY056VI/FR.pdf',                    name:'Viva Catrina',              emoji:'', desc:'Décompte final · tuiles', maxPlayers: 6,
+    img:'', img_banner:'' },
 };
 // Tri alphabétique
 const GAMES = Object.fromEntries(
@@ -1066,6 +1072,9 @@ function startGame() {
   if (g.id === 'dewan')         initDewan();
   if (g.id === 'wingspan')      initWingspan();
   if (g.id === 'maraudeurs')    initMaraudeurs();
+  if (g.id === 'narak')         initNarak();
+  if (g.id === 'citadelles')    initCitadelles();
+  if (g.id === 'viva_catrina')  initVivaCatrina();
   if (g.id === 'iaww')          initIAWW();
   if (g.id === 'pillards')      initPillards();
   showView('game');
@@ -2645,6 +2654,277 @@ function renderMaraudeursManche() {
     </div>`;
 }
 
+
+// ============================================================
+//  NARAK
+// ============================================================
+function initNarak() {
+  const fields = ['recherche','temple','idoles','empl_vides','gardiens','cartes','peurs','tuiles_peur'];
+  session.data.scores = Object.fromEntries(
+    session.players.map(p => [p.id, Object.fromEntries(fields.map(f => [f,'']))]));
+}
+
+function updateNarak(field, pid, val) {
+  session.data.scores[pid][field] = val;
+  const { players, data } = session;
+  players.forEach(p => {
+    const d = data.scores[p.id];
+    const recherche   = parseInt(d.recherche)   || 0;
+    const temple      = parseInt(d.temple)      || 0;
+    const idoles      = parseInt(d.idoles)      || 0;
+    const empl_vides  = parseInt(d.empl_vides)  || 0;
+    const gardiens    = parseInt(d.gardiens)    || 0;
+    const cartes      = parseInt(d.cartes)      || 0;
+    const peurs       = parseInt(d.peurs)       || 0;
+    const tuiles_peur = parseInt(d.tuiles_peur) || 0;
+    const pts = {
+      recherche, temple,
+      idoles: idoles * 3,
+      empl_vides,
+      gardiens: gardiens * 5,
+      cartes,
+      peurs: -peurs,
+      tuiles_peur: -(tuiles_peur * 2)
+    };
+    Object.entries(pts).forEach(([f, v]) => {
+      const el = document.getElementById('narak-pts-' + f + '-' + p.id);
+      if (el) { el.textContent = (v >= 0 ? '+' : '') + v + ' pts'; el.style.color = v < 0 ? 'var(--red)' : 'var(--green)'; }
+    });
+    const total = Object.values(pts).reduce((a,b) => a+b, 0);
+    const tEl = document.getElementById('narak-total-' + p.id);
+    const pEl = document.getElementById('narak-pill-' + p.id);
+    if (tEl) tEl.textContent = total;
+    if (pEl) pEl.textContent = total;
+  });
+}
+
+function renderNarakManche() {
+  const { players, data } = session;
+  const el = document.getElementById('view-game');
+  const cats = [
+    { id:'recherche',   label:'Piste Recherche',         hint:'Total des pts des 2 jetons (loupe + calepin) selon leur position',  neg:false },
+    { id:'temple',      label:'Tuiles Temple',           hint:'Somme des pts indiqués sur tes tuiles Temple',                       neg:false },
+    { id:'idoles',      label:'Idoles',                  hint:"3 pts par idole (toutes) — l'app multiplie",                        neg:false },
+    { id:'empl_vides',  label:'Emplacements Idole vides',hint:'Pts indiqués sur les emplacements Idole non utilisés',               neg:false },
+    { id:'gardiens',    label:'Gardiens maîtrisés',      hint:"5 pts par gardien — l'app multiplie",                               neg:false },
+    { id:'cartes',      label:'Cartes Objet + Artéfact', hint:'Somme des pts sur tes cartes Objet et Artéfact',                     neg:false },
+    { id:'peurs',       label:'Cartes Peur',             hint:"-1 pt par carte Peur — l'app applique le malus",                    neg:true  },
+    { id:'tuiles_peur', label:'Tuiles Peur',             hint:"-2 pts par tuile Peur — l'app applique le malus",                   neg:true  },
+  ];
+  const totals = players.map(p => {
+    const d = data.scores[p.id];
+    return (parseInt(d.recherche)||0)+(parseInt(d.temple)||0)+((parseInt(d.idoles)||0)*3)+(parseInt(d.empl_vides)||0)+((parseInt(d.gardiens)||0)*5)+(parseInt(d.cartes)||0)-(parseInt(d.peurs)||0)-((parseInt(d.tuiles_peur)||0)*2);
+  });
+
+  el.innerHTML = `<div class="manche-screen">
+    ${gameHeroHTML('narak','Décompte final · 5 manches','<button class="btn btn-primary btn-sm" onclick="finishGame(\'narak\')">Résultats →</button>')}
+    <div class="totals-bar">${players.map((p,i) => `<div class="total-pill"><div class="total-pill-name">${p.name}</div><div class="total-pill-val" style="color:var(--accent)" id="narak-pill-${p.id}">${totals[i]}</div></div>`).join('')}</div>
+    <div style="display:flex;margin:0 0 6px"><div style="flex:1"></div><div style="display:flex;gap:6px">${players.map(p=>`<div style="width:72px;text-align:center;font-size:11px;color:var(--text-2);font-weight:500">${p.name}</div>`).join('')}</div></div>
+    <div class="card" style="margin-bottom:10px">
+      <div class="agr-section-head">Renommée</div>
+      ${cats.map(cat => `<div class="agr-row">
+        <div class="agr-label"><div class="agr-label-text">${cat.label}</div><div class="agr-label-hint">${cat.hint}</div></div>
+        <div style="display:flex;gap:6px">${players.map(p => {
+          const v = parseInt(data.scores[p.id][cat.id])||0;
+          const pts = cat.id==='idoles'?v*3:cat.id==='gardiens'?v*5:cat.id==='peurs'?-v:cat.id==='tuiles_peur'?-v*2:v;
+          const col = pts < 0 ? 'var(--red)' : 'var(--green)';
+          return `<div style="width:72px;display:flex;flex-direction:column;align-items:center;gap:2px">
+            <input type="text" inputmode="numeric" class="agr-field ${cat.neg?'neg':''}" style="width:100%"
+              value="${data.scores[p.id][cat.id]||''}" placeholder="—"
+              oninput="updateNarak('${cat.id}','${p.id}',this.value)">
+            <div style="font-size:11px;font-weight:700;color:${col}" id="narak-pts-${cat.id}-${p.id}">${pts>=0?'+':''}${pts} pts</div>
+          </div>`;
+        }).join('')}</div>
+      </div>`).join('')}
+    </div>
+    <div class="card" style="background:var(--glass-md)"><div style="display:flex;align-items:center"><div style="flex:1;font-size:14px;font-weight:700;color:var(--accent)">Total</div><div style="display:flex;gap:6px">${players.map((p,i)=>`<div style="width:72px;text-align:center"><div style="font-size:22px;font-weight:700" id="narak-total-${p.id}">${totals[i]}</div><div style="font-size:10px;color:var(--text-2)">${p.name}</div></div>`).join('')}</div></div></div>
+    <div class="manche-footer"><button class="btn btn-primary btn-full" onclick="finishGame('narak')">Voir les résultats</button></div>
+  </div>`;
+}
+
+// ============================================================
+//  CITADELLES
+// ============================================================
+function initCitadelles() {
+  const fields = ['quartiers','cinq_couleurs','premier_8','autre_8'];
+  session.data.scores = Object.fromEntries(
+    session.players.map(p => [p.id, Object.fromEntries(fields.map(f => [f, f==='quartiers'?'':'non']))]));
+}
+
+function updateCitadelles(field, pid, val) {
+  session.data.scores[pid][field] = val;
+  const { players, data } = session;
+  players.forEach(p => {
+    const d = data.scores[p.id];
+    const q  = parseInt(d.quartiers)||0;
+    const cc = d.cinq_couleurs==='oui'?3:0;
+    const p8 = d.premier_8==='oui'?4:0;
+    const a8 = d.autre_8==='oui'?2:0;
+    const total = q + cc + p8 + a8;
+    const tEl = document.getElementById('cit-total-'+p.id);
+    const pEl = document.getElementById('cit-pill-'+p.id);
+    if (tEl) tEl.textContent = total;
+    if (pEl) pEl.textContent = total;
+  });
+}
+
+function toggleCitadelles(field, pid) {
+  const cur = session.data.scores[pid][field];
+  session.data.scores[pid][field] = cur === 'oui' ? 'non' : 'oui';
+  updateCitadelles(field, pid, session.data.scores[pid][field]);
+  renderCitadellesManche();
+}
+
+function renderCitadellesManche() {
+  const { players, data } = session;
+  const el = document.getElementById('view-game');
+  const totals = players.map(p => {
+    const d = data.scores[p.id];
+    return (parseInt(d.quartiers)||0)+(d.cinq_couleurs==='oui'?3:0)+(d.premier_8==='oui'?4:0)+(d.autre_8==='oui'?2:0);
+  });
+
+  el.innerHTML = `<div class="manche-screen">
+    ${gameHeroHTML('citadelles','Décompte final · quartiers','<button class="btn btn-primary btn-sm" onclick="finishGame(\'citadelles\')">Résultats →</button>')}
+    <div class="totals-bar">${players.map((p,i)=>`<div class="total-pill"><div class="total-pill-name">${p.name}</div><div class="total-pill-val" style="color:var(--accent)" id="cit-pill-${p.id}">${totals[i]}</div></div>`).join('')}</div>
+    <div style="display:flex;margin:0 0 6px"><div style="flex:1"></div><div style="display:flex;gap:6px">${players.map(p=>`<div style="width:72px;text-align:center;font-size:11px;color:var(--text-2);font-weight:500">${p.name}</div>`).join('')}</div></div>
+
+    <div class="card" style="margin-bottom:10px">
+      <div class="agr-section-head">Quartiers</div>
+      <div class="agr-row">
+        <div class="agr-label"><div class="agr-label-text">Coût total des quartiers</div><div class="agr-label-hint">Somme des coûts de construction de tous tes quartiers</div></div>
+        <div style="display:flex;gap:6px">${players.map(p=>`<div style="width:72px;display:flex;flex-direction:column;align-items:center;gap:2px">
+          <input type="text" inputmode="numeric" class="agr-field" style="width:100%"
+            value="${data.scores[p.id].quartiers||''}" placeholder="—"
+            oninput="updateCitadelles('quartiers','${p.id}',this.value)">
+          <div style="font-size:11px;font-weight:700;color:var(--green)">+${parseInt(data.scores[p.id].quartiers)||0} pts</div>
+        </div>`).join('')}</div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:10px">
+      <div class="agr-section-head">Bonus</div>
+      ${[
+        {id:'cinq_couleurs', label:'5 couleurs différentes', hint:'+3 pts si ta cité contient les 5 couleurs', bonus:3},
+        {id:'premier_8',     label:'Premier à 8 quartiers',  hint:'+4 pts pour le premier joueur ayant terminé', bonus:4},
+        {id:'autre_8',       label:'Aussi 8 quartiers',      hint:'+2 pts pour les autres joueurs ayant 8 quartiers', bonus:2},
+      ].map(b => `<div class="agr-row" style="align-items:center">
+        <div class="agr-label"><div class="agr-label-text">${b.label}</div><div class="agr-label-hint">${b.hint}</div></div>
+        <div style="display:flex;gap:6px">${players.map(p => {
+          const active = data.scores[p.id][b.id]==='oui';
+          return `<div style="width:72px;display:flex;flex-direction:column;align-items:center;gap:4px">
+            <button onclick="toggleCitadelles('${b.id}','${p.id}')"
+              style="width:100%;padding:8px 4px;border-radius:10px;border:1px solid ${active?'var(--green)':'var(--border)'};background:${active?'rgba(48,209,88,.15)':'var(--glass)'};color:${active?'var(--green)':'var(--text-2)'};font-family:inherit;font-size:12px;font-weight:600;cursor:pointer">
+              ${active?'✓ Oui':'Non'}
+            </button>
+            <div style="font-size:11px;font-weight:700;color:${active?'var(--green)':'var(--text-3)'}">${active?'+'+b.bonus+' pts':'—'}</div>
+          </div>`;
+        }).join('')}</div>
+      </div>`).join('')}
+    </div>
+
+    <div class="card" style="background:var(--glass-md)"><div style="display:flex;align-items:center"><div style="flex:1;font-size:14px;font-weight:700;color:var(--accent)">Total</div><div style="display:flex;gap:6px">${players.map((p,i)=>`<div style="width:72px;text-align:center"><div style="font-size:22px;font-weight:700" id="cit-total-${p.id}">${totals[i]}</div><div style="font-size:10px;color:var(--text-2)">${p.name}</div></div>`).join('')}</div></div></div>
+    <div class="manche-footer"><button class="btn btn-primary btn-full" onclick="finishGame('citadelles')">Voir les résultats</button></div>
+  </div>`;
+}
+
+// ============================================================
+//  VIVA CATRINA
+// ============================================================
+const ECHOPPE_PV = [0,0,1,4,9,16,25];
+
+function initVivaCatrina() {
+  const fields = ['ballons_rouge','ballons_bleu','ballons_vert','ballons_jaune','visiteurs','papillons','chimeres5','chimeres3','echoppes','autels'];
+  session.data.scores = Object.fromEntries(
+    session.players.map(p => [p.id, Object.fromEntries(fields.map(f => [f,'']))]));
+}
+
+function updateVivaCatrina(field, pid, val) {
+  session.data.scores[pid][field] = val;
+  const { players, data } = session;
+  players.forEach(p => {
+    const d = data.scores[p.id];
+    const br = parseInt(d.ballons_rouge)||0;
+    const bb = parseInt(d.ballons_bleu) ||0;
+    const bv = parseInt(d.ballons_vert) ||0;
+    const bj = parseInt(d.ballons_jaune)||0;
+    const visiteurs = parseInt(d.visiteurs)  ||0;
+    const papillons = parseInt(d.papillons)  ||0;
+    const ch5       = parseInt(d.chimeres5)  ||0;
+    const ch3       = parseInt(d.chimeres3)  ||0;
+    const echo      = Math.min(6, parseInt(d.echoppes)||0);
+    const autels    = parseInt(d.autels)     ||0;
+    const ballons_total = br+bb+bv+bj;
+    const total = ballons_total + visiteurs + (papillons*2) + (ch5*5) + (ch3*3) + ECHOPPE_PV[echo] + autels;
+    // labels pts
+    const ptsMap = {
+      ballons_rouge: br, ballons_bleu: bb, ballons_vert: bv, ballons_jaune: bj,
+      visiteurs, papillons: papillons*2, chimeres5: ch5*5, chimeres3: ch3*3,
+      echoppes: ECHOPPE_PV[echo], autels
+    };
+    Object.entries(ptsMap).forEach(([f,v]) => {
+      const el = document.getElementById('cat-pts-'+f+'-'+p.id);
+      if (el) el.textContent = '+'+v+' pts';
+    });
+    const tEl = document.getElementById('cat-total-'+p.id);
+    const pEl = document.getElementById('cat-pill-'+p.id);
+    if (tEl) tEl.textContent = total;
+    if (pEl) pEl.textContent = total;
+  });
+}
+
+function renderVivaCatrinaManche() {
+  const { players, data } = session;
+  const el = document.getElementById('view-game');
+  const ECHOPPE_PV_L = [0,0,1,4,9,16,25];
+  const totals = players.map(p => {
+    const d = data.scores[p.id];
+    const br=parseInt(d.ballons_rouge)||0, bb=parseInt(d.ballons_bleu)||0, bv=parseInt(d.ballons_vert)||0, bj=parseInt(d.ballons_jaune)||0;
+    const echo=Math.min(6,parseInt(d.echoppes)||0);
+    return (br+bb+bv+bj)+(parseInt(d.visiteurs)||0)+((parseInt(d.papillons)||0)*2)+((parseInt(d.chimeres5)||0)*5)+((parseInt(d.chimeres3)||0)*3)+ECHOPPE_PV_L[echo]+(parseInt(d.autels)||0);
+  });
+
+  const makeRow = (id, label, hint, suffix) => `<div class="agr-row">
+    <div class="agr-label"><div class="agr-label-text">${label}</div><div class="agr-label-hint">${hint}</div></div>
+    <div style="display:flex;gap:6px">${players.map(p => {
+      const v = parseInt(data.scores[p.id][id])||0;
+      const pts = suffix==='x2'?v*2:suffix==='x5'?v*5:suffix==='x3'?v*3:suffix==='echo'?ECHOPPE_PV_L[Math.min(6,v)]:v;
+      return `<div style="width:72px;display:flex;flex-direction:column;align-items:center;gap:2px">
+        <input type="text" inputmode="numeric" class="agr-field" style="width:100%"
+          value="${data.scores[p.id][id]||''}" placeholder="—"
+          oninput="updateVivaCatrina('${id}','${p.id}',this.value)">
+        <div style="font-size:11px;font-weight:700;color:var(--green)" id="cat-pts-${id}-${p.id}">+${pts} pts</div>
+      </div>`;
+    }).join('')}</div>
+  </div>`;
+
+  el.innerHTML = `<div class="manche-screen">
+    ${gameHeroHTML('viva_catrina','Décompte final · tuiles','<button class="btn btn-primary btn-sm" onclick="finishGame(\'viva_catrina\')">Résultats →</button>')}
+    <div class="totals-bar">${players.map((p,i)=>`<div class="total-pill"><div class="total-pill-name">${p.name}</div><div class="total-pill-val" style="color:var(--accent)" id="cat-pill-${p.id}">${totals[i]}</div></div>`).join('')}</div>
+    <div style="display:flex;margin:0 0 6px"><div style="flex:1"></div><div style="display:flex;gap:6px">${players.map(p=>`<div style="width:72px;text-align:center;font-size:11px;color:var(--text-2);font-weight:500">${p.name}</div>`).join('')}</div></div>
+
+    <div class="card" style="margin-bottom:10px">
+      <div class="agr-section-head">Ballons (points directs par couleur)</div>
+      ${makeRow('ballons_rouge','Ballons Rouges',  'Pts des tuiles Ballon rouges','direct')}
+      ${makeRow('ballons_bleu', 'Ballons Bleus',   'Pts des tuiles Ballon bleus','direct')}
+      ${makeRow('ballons_vert', 'Ballons Verts',   'Pts des tuiles Ballon verts','direct')}
+      ${makeRow('ballons_jaune','Ballons Jaunes',  'Pts des tuiles Ballon jaunes','direct')}
+    </div>
+
+    <div class="card" style="margin-bottom:10px">
+      <div class="agr-section-head">Village</div>
+      ${makeRow('visiteurs',  'Visiteurs',              '1 pt par Visiteur sur chemin pavé relié','direct')}
+      ${makeRow('papillons',  'Papillons',              'Multiplier par 2 chaque papillon sur sentier fleuri',  'x2')}
+      ${makeRow('chimeres5',  'Grandes Chimeres (5 pts)','5 pts par grande Chimere',                            'x5')}
+      ${makeRow('chimeres3',  'Petites Chimeres (3 pts)','3 pts par petite Chimere',                            'x3')}
+      ${makeRow('echoppes',   'Nb echoppes differentes', '0=0pt | 1=0pt | 2=1pt | 3=4pts | 4=9pts | 5=16pts | 6=25pts', 'echo')}
+      ${makeRow('autels',     'Autels',                 'Pts de tes autels selon leurs conditions','direct')}
+    </div>
+
+    <div class="card" style="background:var(--glass-md)"><div style="display:flex;align-items:center"><div style="flex:1;font-size:14px;font-weight:700;color:var(--accent)">Total</div><div style="display:flex;gap:6px">${players.map((p,i)=>`<div style="width:72px;text-align:center"><div style="font-size:22px;font-weight:700" id="cat-total-${p.id}">${totals[i]}</div><div style="font-size:10px;color:var(--text-2)">${p.name}</div></div>`).join('')}</div></div></div>
+    <div class="manche-footer"><button class="btn btn-primary btn-full" onclick="finishGame('viva_catrina')">Voir les résultats</button></div>
+  </div>`;
+}
+
 function renderCurrentManche() {
   if (!session) return;
   if (session.gameId === 'flip7')         renderFlip7Manche();
@@ -2654,6 +2934,9 @@ function renderCurrentManche() {
   if (session.gameId === 'dewan')         renderDewanManche();
   if (session.gameId === 'wingspan')      renderWingspanManche();
   if (session.gameId === 'maraudeurs')    renderMaraudeursManche();
+  if (session.gameId === 'narak')         renderNarakManche();
+  if (session.gameId === 'citadelles')    renderCitadellesManche();
+  if (session.gameId === 'viva_catrina')  renderVivaCatrinaManche();
   if (session.gameId === 'iaww')          renderIAWWManche();
   if (session.gameId === 'pillards')      renderPillardsManche();
 }
@@ -2735,6 +3018,54 @@ function finishGame(gameId) {
         return sum + agrScore(item.id, data.scores[p.id][item.id] || 0);
       }, 0)
     })).sort((a, b) => b.total - a.total);
+  }
+
+  if (gameId === 'narak') {
+    results = players.map(p => {
+      const d = data.scores[p.id];
+      const recherche = parseInt(d.recherche)  || 0;
+      const temple    = parseInt(d.temple)     || 0;
+      const idoles    = parseInt(d.idoles)     || 0;
+      const empl_vides= parseInt(d.empl_vides) || 0;
+      const gardiens  = parseInt(d.gardiens)   || 0;
+      const cartes    = parseInt(d.cartes)     || 0;
+      const peurs     = parseInt(d.peurs)      || 0;
+      const tuiles_peur = parseInt(d.tuiles_peur) || 0;
+      const total = recherche + temple + (idoles*3) + empl_vides + (gardiens*5) + cartes - peurs - (tuiles_peur*2);
+      return { ...p, total };
+    }).sort((a,b) => b.total - a.total);
+  }
+
+  if (gameId === 'citadelles') {
+    results = players.map(p => {
+      const d = data.scores[p.id];
+      const quartiers   = parseInt(d.quartiers)   || 0;
+      const cinq_coul   = d.cinq_couleurs  === 'oui' ? 3 : 0;
+      const premier_8   = d.premier_8      === 'oui' ? 4 : 0;
+      const autre_8     = d.autre_8        === 'oui' ? 2 : 0;
+      const total = quartiers + cinq_coul + premier_8 + autre_8;
+      return { ...p, total };
+    }).sort((a,b) => b.total - a.total);
+  }
+
+  if (gameId === 'viva_catrina') {
+    const ECHOPPE_PV = [0,0,1,4,9,16,25];
+    results = players.map(p => {
+      const d = data.scores[p.id];
+      const ballons_rouge = parseInt(d.ballons_rouge) || 0;
+      const ballons_bleu  = parseInt(d.ballons_bleu)  || 0;
+      const ballons_vert  = parseInt(d.ballons_vert)  || 0;
+      const ballons_jaune = parseInt(d.ballons_jaune) || 0;
+      const visiteurs   = parseInt(d.visiteurs)   || 0;
+      const papillons   = parseInt(d.papillons)   || 0;
+      const chimeres5   = parseInt(d.chimeres5)   || 0;
+      const chimeres3   = parseInt(d.chimeres3)   || 0;
+      const echoppes    = Math.min(6, parseInt(d.echoppes) || 0);
+      const autels      = parseInt(d.autels)      || 0;
+      const ballons_total = ballons_rouge + ballons_bleu + ballons_vert + ballons_jaune;
+      const total = ballons_total + visiteurs + (papillons*2) + (chimeres5*5) + (chimeres3*3) + ECHOPPE_PV[echoppes] + autels;
+      return { ...p, total };
+    }).sort((a,b) => b.total - a.total);
   }
 
   if (gameId === 'maraudeurs') {
