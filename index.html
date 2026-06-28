@@ -566,16 +566,16 @@ body::before {
   <nav class="nav">
     <div class="nav-inner">
       <button class="nav-tab active" onclick="showView('home')">
-        <span class="ti">🎲</span><span>Jouer</span>
+        <span class="ti"></span><span>Jouer</span>
       </button>
       <button class="nav-tab" onclick="showView('history')">
-        <span class="ti">📋</span><span>Historique</span>
+        <span class="ti"></span><span>Historique</span>
       </button>
       <button class="nav-tab" onclick="showView('stats')">
-        <span class="ti">📊</span><span>Stats</span>
+        <span class="ti"></span><span>Stats</span>
       </button>
       <button class="nav-tab" onclick="showView('counter')">
-        <span class="ti">🔢</span><span>Compteur</span>
+        <span class="ti"></span><span>Compteur</span>
       </button>
     </div>
   </nav>
@@ -620,7 +620,7 @@ body::before {
       </div>
       <div style="display:flex;gap:8px;margin-top:4px">
         <button class="btn btn-glass" style="flex:1" onclick="newGame()">Nouvelle partie</button>
-        <button class="btn btn-primary" style="flex:1" onclick="saveAndFinish()">💾 Sauvegarder</button>
+        <button class="btn btn-primary" style="flex:1" onclick="saveAndFinish()">Sauvegarder</button>
       </div>
     </section>
 
@@ -649,7 +649,7 @@ body::before {
       </div>
       <div id="counter-list"></div>
       <div id="counter-empty" style="display:none" class="card" style="text-align:center;padding:2rem">
-        <div style="font-size:2rem;margin-bottom:.5rem">🔢</div>
+        
         <div style="color:var(--text-2);font-size:.9rem">Appuie sur + Joueur pour commencer</div>
       </div>
     </section>
@@ -664,7 +664,7 @@ body::before {
 <div class="modal-overlay" id="modal-login">
   <div class="modal">
     <div class="modal-handle"></div>
-    <div class="modal-title">🔐 Accès admin</div>
+    <div class="modal-title">Accès admin</div>
     <p style="font-size:13px;color:var(--text-2);margin-bottom:16px">Connecte-toi avec ton compte Google PTG pour accéder à l'administration.</p>
     <button class="btn btn-primary btn-full" onclick="signInGoogle()">Se connecter avec Google</button>
     <div class="modal-actions">
@@ -678,7 +678,7 @@ body::before {
   <div class="modal">
     <div class="modal-handle"></div>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-      <div class="modal-title" style="margin:0">⚙️ Admin — Images des jeux</div>
+      <div class="modal-title" style="margin:0">Admin — Images des jeux</div>
       <button class="btn btn-danger btn-sm" onclick="signOutAdmin()">Déconnexion</button>
     </div>
     <p style="font-size:12px;color:var(--text-2);margin-bottom:16px">Colle l'URL de l'image pour chaque jeu. Elle sera sauvegardée sur Firebase.</p>
@@ -921,7 +921,7 @@ function selectGame(id) {
 // ============================================================
 //  QUICK PLAYERS (sans compte, juste un prénom)
 // ============================================================
-const EMOJIS = ['🎭','🦊','🐉','🌟','🎯','🎸','🦁','🐺','🦋','🎪','🌈','🔥'];
+const EMOJIS = ['A','B','C','D','E','F','G','H','I','J','K','L'];
 
 function addQuickPlayer() {
   const inp = document.getElementById('new-player-input');
@@ -930,7 +930,7 @@ function addQuickPlayer() {
   if (quickPlayers.find(p => p.name.toLowerCase() === name.toLowerCase())) return toast('Déjà dans la partie');
   const maxP = (selectedGameId && GAMES[selectedGameId]) ? GAMES[selectedGameId].maxPlayers : 8;
   if (quickPlayers.length >= maxP) return toast(`Maximum ${maxP} joueurs pour ce jeu`);
-  quickPlayers.push({ name, emoji: EMOJIS[quickPlayers.length % EMOJIS.length] });
+  quickPlayers.push({ name, emoji: '' });
   inp.value = '';
   inp.focus();
   renderQuickPlayers();
@@ -948,7 +948,7 @@ function renderQuickPlayers() {
   if (!quickPlayers.length) { el.innerHTML = ''; return; }
   el.innerHTML = quickPlayers.map((p, i) => `
     <div class="player-tag">
-      <span>${p.emoji} ${p.name}</span>
+      <span>${p.name}</span>
       <button class="tag-rm" onclick="removeQuickPlayer(${i})">×</button>
     </div>`).join('');
 }
@@ -1013,7 +1013,7 @@ function renderFlip7Manche() {
   const leaders = players.filter(p => data.totals[p.id] >= 200);
   const alertHtml = leaders.length ? `
     <div class="end-alert">
-      <strong>🏆 ${leaders.map(p => p.name).join(' & ')}</strong> ${leaders.length > 1 ? 'ont' : 'a'} atteint 200 points !
+      <strong>${leaders.map(p => p.name).join(' & ')}</strong> ${leaders.length > 1 ? 'ont' : 'a'} atteint 200 points !
     </div>` : '';
 
   const gameImg = GAMES['flip7']?.img || '';
@@ -1026,7 +1026,7 @@ function renderFlip7Manche() {
         <div class="game-hero-overlay"></div>
         <div class="game-hero-content">
           <div class="game-hero-left">
-            <div class="game-hero-title">🃏 Flip 7</div>
+            <div class="game-hero-title">Flip 7</div>
             <div class="game-hero-sub">Objectif 200 pts · ${players.length} joueurs</div>
           </div>
           <div class="game-hero-nav">
@@ -1051,7 +1051,7 @@ function renderFlip7Manche() {
         const totalCol = total >= 200 ? 'var(--green)' : total >= 150 ? 'var(--gold)' : 'var(--text-2)';
         return `<div class="player-card-a ${cardCls}">
           <div class="pca-header">
-            <span class="pca-name">${p.emoji} ${p.name}</span>
+            <span class="pca-name">${p.name}</span>
             <span class="pca-total ${totalCls}" style="color:${totalCol}">Total : ${total} pts</span>
           </div>
           <div class="pca-controls">
@@ -1060,7 +1060,7 @@ function renderFlip7Manche() {
               value="${val}" onchange="f7InputChange('${p.id}', this.value)">
             <button class="btn-circle" onclick="f7Plus('${p.id}')">+</button>
             <button class="btn-flip-bonus ${m.bonus[p.id] ? 'active' : ''}"
-              onclick="toggleFlip7Bonus('${p.id}')" title="+15 pts Flip 7">🃏</button>
+              onclick="toggleFlip7Bonus('${p.id}')" title="+15 pts Flip 7">+15</button>
           </div>
         </div>`;
       }).join('')}
@@ -1068,8 +1068,8 @@ function renderFlip7Manche() {
       <!-- footer -->
       <div class="manche-footer">
         ${leaders.length
-          ? `<button class="btn btn-primary btn-full" onclick="finishGame('flip7')">🏆 Voir les résultats</button>`
-          : `<button class="btn btn-glass" style="flex:1" onclick="openManchesModal()">📋 Manches</button>
+          ? `<button class="btn btn-primary btn-full" onclick="finishGame('flip7')">Voir les résultats</button>`
+          : `<button class="btn btn-glass" style="flex:1" onclick="openManchesModal()">Manches</button>
              <button class="btn btn-primary" style="flex:2" onclick="nextMancheFlip7()">Manche suivante →</button>`
         }
       </div>
@@ -1181,7 +1181,7 @@ function renderSkullKingManche() {
         <div class="game-hero-overlay"></div>
         <div class="game-hero-content">
           <div class="game-hero-left">
-            <div class="game-hero-title">💀 Skull King</div>
+            <div class="game-hero-title">Skull King</div>
             <div class="game-hero-sub">Manche ${m.num} · ${m.cards} carte${m.cards > 1 ? 's' : ''}</div>
           </div>
           <div class="game-hero-nav">
@@ -1203,7 +1203,7 @@ function renderSkullKingManche() {
         const cumulCol = cumul > 0 ? 'var(--green)' : cumul < 0 ? 'var(--red)' : 'var(--text-2)';
         return `<div class="sk-player-card-a">
           <div class="sk-pca-header">
-            <span class="sk-pca-name">${p.emoji} ${p.name}</span>
+            <span class="sk-pca-name">${p.name}</span>
             <div>
               <span class="sk-pca-pts ${ptsCls}">${bothFilled ? (pts > 0 ? '+' : '') + pts + ' pts' : '—'}</span>
               <span style="font-size:11px;color:${cumulCol};margin-left:8px">Cumul : ${cumul > 0 ? '+' : ''}${cumul}</span>
@@ -1230,10 +1230,10 @@ function renderSkullKingManche() {
       }).join('')}
 
       <div class="manche-footer">
-        <button class="btn btn-glass" style="flex:1" onclick="openManchesModal()">📋 Manches</button>
+        <button class="btn btn-glass" style="flex:1" onclick="openManchesModal()">Manches</button>
         ${mancheIdx < 9
           ? `<button class="btn btn-primary" style="flex:2" onclick="nextMancheSK()">Manche suivante →</button>`
-          : `<button class="btn btn-primary" style="flex:2" onclick="finishGame('skull_king')">🏆 Voir les résultats</button>`
+          : `<button class="btn btn-primary" style="flex:2" onclick="finishGame('skull_king')">Voir les résultats</button>`
         }
       </div>
     </div>`;
@@ -1269,7 +1269,7 @@ function renderAgricolaManche() {
         <div class="game-hero-overlay"></div>
         <div class="game-hero-content">
           <div class="game-hero-left">
-            <div class="game-hero-title">🌾 Agricola</div>
+            <div class="game-hero-title">Agricola</div>
             <div class="game-hero-sub">Saisis les quantités — les pts sont calculés</div>
           </div>
           <button class="btn btn-primary btn-sm" onclick="finishGame('agricola')" style="margin-bottom:2px">Résultats →</button>
@@ -1333,7 +1333,7 @@ function renderAgricolaManche() {
       </div>
 
       <div class="manche-footer">
-        <button class="btn btn-primary btn-full" onclick="finishGame('agricola')">🏆 Voir les résultats</button>
+        <button class="btn btn-primary btn-full" onclick="finishGame('agricola')">Voir les résultats</button>
       </div>
     </div>`;
   updateAgricolaTotals();
@@ -1406,7 +1406,7 @@ function renderSevenWondersManche() {
         <div class="game-hero-overlay"></div>
         <div class="game-hero-content">
           <div class="game-hero-left">
-            <div class="game-hero-title">🏛️ 7 Wonders</div>
+            <div class="game-hero-title">7 Wonders</div>
             <div class="game-hero-sub">Saisis les valeurs — les pts sont calculés</div>
           </div>
           <button class="btn btn-primary btn-sm" onclick="finishGame('seven_wonders')" style="margin-bottom:2px">Résultats →</button>
@@ -1418,7 +1418,7 @@ function renderSevenWondersManche() {
         ${players.map((p, i) => {
           const t = totaux[i];
           return `<div class="total-pill">
-            <div class="total-pill-name">${p.emoji} ${p.name}</div>
+            <div class="total-pill-name">${p.name}</div>
             <div class="total-pill-val" style="color:var(--accent)" id="sw-pill-${p.id}">${t.total}</div>
           </div>`;
         }).join('')}
@@ -1434,7 +1434,7 @@ function renderSevenWondersManche() {
 
       <!-- 1. CONFLITS MILITAIRES -->
       <div class="card" style="margin-bottom:10px">
-        <div class="agr-section-head">⚔️ Conflits militaires</div>
+        <div class="agr-section-head">Conflits militaires</div>
         <div class="agr-row">
           <div class="agr-label">
             <div class="agr-label-text">Points militaires</div>
@@ -1457,7 +1457,7 @@ function renderSevenWondersManche() {
 
       <!-- 2. TRÉSOR -->
       <div class="card" style="margin-bottom:10px">
-        <div class="agr-section-head">💰 Trésor</div>
+        <div class="agr-section-head">Trésor</div>
         <div class="agr-row">
           <div class="agr-label">
             <div class="agr-label-text">Nombre de pièces</div>
@@ -1480,7 +1480,7 @@ function renderSevenWondersManche() {
 
       <!-- 3. MERVEILLE -->
       <div class="card" style="margin-bottom:10px">
-        <div class="agr-section-head">🏛️ Merveille</div>
+        <div class="agr-section-head">Merveille</div>
         <div class="agr-row">
           <div class="agr-label">
             <div class="agr-label-text">Points des étapes construites</div>
@@ -1498,7 +1498,7 @@ function renderSevenWondersManche() {
 
       <!-- 4. BÂTIMENTS CIVILS (bleu) -->
       <div class="card" style="margin-bottom:10px">
-        <div class="agr-section-head">🔵 Bâtiments civils</div>
+        <div class="agr-section-head">Bâtiments civils</div>
         <div class="agr-row">
           <div class="agr-label">
             <div class="agr-label-text">Cartes bleues</div>
@@ -1516,7 +1516,7 @@ function renderSevenWondersManche() {
 
       <!-- 5. COMMERCIAL + GUILDES -->
       <div class="card" style="margin-bottom:10px">
-        <div class="agr-section-head">🟡 Commercial & Guildes</div>
+        <div class="agr-section-head">Commercial & Guildes</div>
         <div class="agr-row">
           <div class="agr-label">
             <div class="agr-label-text">Bâtiments commerciaux (jaune)</div>
@@ -1547,12 +1547,12 @@ function renderSevenWondersManche() {
 
       <!-- 6. SCIENCE (vert) — calcul automatique ! -->
       <div class="card" style="margin-bottom:10px">
-        <div class="agr-section-head">🟢 Science</div>
+        <div class="agr-section-head">Science</div>
         <div style="font-size:11px;color:var(--text-2);margin-bottom:8px;padding:0 2px">
           Saisis le nombre de chaque symbole — l'app calcule : (nb²) + 7pts par set de 3 différents
         </div>
         ${['roue','compas','tablette'].map(sym => {
-          const labels = { roue: '⚙️ Roues', compas: '🧭 Compas', tablette: '📜 Tablettes' };
+          const labels = { roue: 'Roues', compas: 'Compas', tablette: 'Tablettes' };
           return `<div class="agr-row">
             <div class="agr-label">
               <div class="agr-label-text">${labels[sym]}</div>
@@ -1591,7 +1591,7 @@ function renderSevenWondersManche() {
       </div>
 
       <div class="manche-footer">
-        <button class="btn btn-primary btn-full" onclick="finishGame('seven_wonders')">🏆 Voir les résultats</button>
+        <button class="btn btn-primary btn-full" onclick="finishGame('seven_wonders')">Voir les résultats</button>
       </div>
     </div>`;
 }
@@ -1653,13 +1653,13 @@ function openManchesModal() {
       players.forEach(p => { tots[p.id] += (m.scores[p.id] || 0); });
       html += `<div class="manche-summary" onclick="goToManche(${mi});closeModal('modal-manches')">
         <div class="manche-summary-num">Manche ${mi + 1}</div>
-        <div class="manche-summary-scores">${players.map(p => `${p.name}: ${m.scores[p.id] || 0}${m.bonus[p.id] ? ' 🃏' : ''}`).join(' · ')}</div>
+        <div class="manche-summary-scores">${players.map(p => `${p.name}: ${m.scores[p.id] || 0}${m.bonus[p.id] ? ' +15' : ''}`).join(' · ')}</div>
         <span style="color:var(--text-3)">›</span>
       </div>`;
     });
     html += `<div style="padding:12px 0;color:var(--text-2);font-size:13px;border-top:1px solid rgba(255,255,255,.08);margin-top:8px">
       <strong style="color:var(--text)">Totaux</strong><br>
-      ${players.map(p => `${p.emoji} ${p.name} : <strong style="color:var(--accent)">${tots[p.id]} pts</strong>`).join(' · ')}
+      ${players.map(p => `${p.name} : <strong style="color:var(--accent)">${tots[p.id]} pts</strong>`).join(' · ')}
     </div>`;
   }
 
@@ -1669,7 +1669,7 @@ function openManchesModal() {
       const mpts = {};
       players.forEach(p => { const v = skPts(m.players[p.id].mise, m.players[p.id].plis, m.players[p.id].bonus, m.cards); mpts[p.id] = v; tots[p.id] += v; });
       html += `<div class="manche-summary" onclick="goToManche(${mi});closeModal('modal-manches')">
-        <div class="manche-summary-num">M${mi + 1} · ${m.cards}🃏</div>
+        <div class="manche-summary-num">M${mi + 1} · ${m.cards}</div>
         <div class="manche-summary-scores">${players.map(p => {
           const v = mpts[p.id]; const col = v > 0 ? 'var(--green)' : v < 0 ? 'var(--red)' : 'var(--text-2)';
           return `<span style="color:${col}">${p.name}: ${v > 0 ? '+' : ''}${v}</span>`;
@@ -1679,7 +1679,7 @@ function openManchesModal() {
     });
     html += `<div style="padding:12px 0;color:var(--text-2);font-size:13px;border-top:1px solid rgba(255,255,255,.08);margin-top:8px">
       <strong style="color:var(--text)">Totaux</strong><br>
-      ${players.map(p => { const col = tots[p.id] > 0 ? 'var(--green)' : tots[p.id] < 0 ? 'var(--red)' : 'var(--text-2)'; return `${p.emoji} ${p.name} : <strong style="color:${col}">${tots[p.id] > 0 ? '+' : ''}${tots[p.id]}</strong>`; }).join(' · ')}
+      ${players.map(p => { const col = tots[p.id] > 0 ? 'var(--green)' : tots[p.id] < 0 ? 'var(--red)' : 'var(--text-2)'; return `${p.name} : <strong style="color:${col}">${tots[p.id] > 0 ? '+' : ''}${tots[p.id]}</strong>`; }).join(' · ')}
     </div>`;
   }
 
@@ -1739,10 +1739,10 @@ function finishGame(gameId) {
 //  SHOW RESULTS
 // ============================================================
 function showResults(results) {
-  document.getElementById('res-title').textContent = session.gameEmoji + ' ' + session.gameName;
+  document.getElementById('res-title').textContent = session.gameName;
   document.getElementById('res-sub').textContent = new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
 
-  const medals = ['🥇', '🥈', '🥉'];
+  const medals = ['1er', '2e', '3e'];
   const barCls = ['p1', 'p2', 'p3', 'pN'];
   let disp = [...results];
   if (disp.length >= 3) { const [f, s, t, ...r] = disp; disp = [s, f, t, ...r]; }
@@ -1753,7 +1753,7 @@ function showResults(results) {
         <div class="podium-medal">${medals[rank] || ''}</div>
         <div class="podium-score">${r.total}</div>
       </div>
-      <div class="podium-name">${r.emoji} ${r.name}</div>
+      <div class="podium-name">${r.name</div>
     </div>`;
   }).join('');
 
@@ -1762,7 +1762,7 @@ function showResults(results) {
     ${results.map((r, i) => `
       <div style="display:flex;align-items:center;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.05)">
         <span style="width:28px;font-size:16px">${medals[i] || (i + 1) + '.'}</span>
-        <span style="flex:1;font-size:14px;font-weight:500">${r.emoji} ${r.name}</span>
+        <span style="flex:1;font-size:14px;font-weight:500">${r.name</span>
         <span style="font-size:16px;font-weight:700;color:${i === 0 ? 'var(--green)' : 'var(--text)'}">${r.total} pts</span>
       </div>`).join('')}`;
 
@@ -1776,7 +1776,7 @@ function saveAndFinish() {
   const s = { ...session, savedAt: new Date().toISOString() };
   sessions.push(s); saveLocal();
   db.ref(REF + '/sessions/' + s.id).set(s);
-  toast('✅ Partie sauvegardée !');
+  toast('Partie sauvegardée !');
   session = null; selectedGameId = null; quickPlayers = [];
   document.querySelectorAll('.game-card').forEach(c => c.classList.remove('selected'));
   document.getElementById('session-setup').style.display = 'none';
@@ -1798,16 +1798,16 @@ function newGame() {
 function renderHistory() {
   const el = document.getElementById('history-list');
   const sorted = [...sessions].sort((a, b) => new Date(b.savedAt) - new Date(a.savedAt));
-  if (!sorted.length) { el.innerHTML = '<div class="empty"><div class="empty-icon">📋</div><div>Aucune partie enregistrée</div></div>'; return; }
+  if (!sorted.length) { el.innerHTML = '<div class="empty"><div>Aucune partie enregistrée</div></div>'; return; }
   el.innerHTML = sorted.map(s => {
     const w = s.results?.[0];
     const date = new Date(s.savedAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
     return `<div class="history-row" onclick="showDetail('${s.id}')">
-      <div class="history-ico">${s.gameEmoji}</div>
+      <div class="history-ico" style="font-size:20px;color:var(--accent);font-weight:700;min-width:24px">${s.gameName.charAt(0)}</div>
       <div class="history-meta">
         <div class="history-game">${s.gameName}</div>
         <div class="history-date">${date} · ${s.players.map(p => p.name).join(', ')}</div>
-        ${w ? `<div class="history-winner">🏆 ${w.emoji} ${w.name} · ${w.total} pts</div>` : ''}
+        ${w ? `<div class="history-winner">${w.name} · ${w.total} pts</div>` : ''}
       </div>
       <div class="history-arrow">›</div>
     </div>`;
@@ -1817,17 +1817,17 @@ function renderHistory() {
 function showDetail(id) {
   selectedSessId = id;
   const s = sessions.find(x => x.id === id); if (!s) return;
-  const medals = ['🥇', '🥈', '🥉'];
+  const medals = ['1er', '2e', '3e'];
   const date = new Date(s.savedAt).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
   document.getElementById('modal-detail-content').innerHTML = `
     <div style="margin-bottom:12px">
-      <div style="font-size:20px;font-weight:700">${s.gameEmoji} ${s.gameName}</div>
+      <div style="font-size:20px;font-weight:700">${s.gameName}</div>
       <div style="font-size:13px;color:var(--text-2);margin-top:2px">${date}</div>
     </div>
     ${s.results ? s.results.map((r, i) => `
       <div style="display:flex;align-items:center;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.07)">
         <span style="font-size:18px;width:30px">${medals[i] || (i + 1) + '.'}</span>
-        <span style="flex:1;font-size:14px">${r.emoji} ${r.name}</span>
+        <span style="flex:1;font-size:14px">${r.name</span>
         <strong style="color:${i === 0 ? 'var(--green)' : 'var(--text)'}">${r.total} pts</strong>
       </div>`).join('') : '<div style="color:var(--text-2)">Aucun résultat</div>'}`;
   document.getElementById('modal-detail').classList.add('open');
@@ -1837,7 +1837,7 @@ function deleteSession() {
   if (!selectedSessId || !confirm('Supprimer cette partie ?')) return;
   sessions = sessions.filter(s => s.id !== selectedSessId); saveLocal();
   db.ref(REF + '/sessions/' + selectedSessId).remove();
-  closeModal('modal-detail'); renderHistory(); toast('🗑️ Supprimée');
+  closeModal('modal-detail'); renderHistory(); toast('Supprimée');
 }
 
 // ============================================================
@@ -1861,11 +1861,11 @@ function renderStats() {
   document.getElementById('palmares').innerHTML = lb.length ? lb.map((w, i) => `
     <div style="display:flex;align-items:center;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.06)">
       <span style="width:22px;font-size:12px;color:var(--text-3)">${i + 1}.</span>
-      <span style="flex:1;font-size:14px">${w.emoji || '🎭'} ${w.name}</span>
-      <span style="color:var(--gold);font-weight:700;margin-right:12px">🏆 ${w.wins}</span>
+      <span style="flex:1;font-size:14px">${w.name}</span>
+      <span style="color:var(--gold);font-weight:700;margin-right:12px">${w.wins}</span>
       <span style="font-size:12px;color:var(--text-2)">${w.games} parties</span>
     </div>`).join('')
-    : '<div class="empty"><div class="empty-icon">📊</div><div>Jouez des parties !</div></div>';
+    : '<div class="empty"><div>Jouez des parties !</div></div>';
 }
 
 // ============================================================
@@ -2062,7 +2062,7 @@ function renderAdminPanel() {
         ? `<img class="admin-img-preview" src="${currentImg}" onerror="this.style.display='none'">`
         : `<div class="admin-img-placeholder">${g.emoji}</div>`;
       return `<div class="admin-game-row">
-        <div class="admin-game-name">${g.emoji} ${g.name}</div>
+        <div class="admin-game-name">${g.name}</div>
         <div class="admin-row-inner">
           ${preview}
           <input class="field" style="flex:1;font-size:13px;padding:8px 12px"
@@ -2078,7 +2078,7 @@ function renderAdminPanel() {
 
 function saveGameImage(gameId, url) {
   db.ref(REF + '/game_images/' + gameId).set(url.trim())
-    .then(() => { toast('✅ Image sauvegardée !'); renderGameGrid(); })
+    .then(() => { toast('Image sauvegardée !'); renderGameGrid(); })
     .catch(() => toast('Erreur sauvegarde'));
 }
 
@@ -2117,7 +2117,7 @@ window.addEventListener('beforeinstallprompt', e => {
 window.addEventListener('appinstalled', () => {
   document.getElementById('pwa-install-btn').style.display = 'none';
   deferredPrompt = null;
-  toast('✅ App installée !');
+  toast('App installée !');
 });
 function installPWA() {
   if (!deferredPrompt) return;
