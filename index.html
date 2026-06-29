@@ -1053,27 +1053,13 @@ body::before {
           onchange="savePodiumMusic(this.value)">
       </div>
 
-      <!-- Pistes d'ambiance -->
-      <div class="admin-settings-title" style="margin-bottom:8px">Pistes d'ambiance</div>
-      <div id="admin-tracks-list"></div>
-      <button class="btn btn-primary btn-full" style="margin-top:10px" onclick="addTrack()">+ Ajouter une piste</button>
+      <!-- Thèmes musicaux -->
+      <div class="admin-settings-title" style="margin-bottom:8px">Thèmes musicaux</div>
+      <div id="admin-theme-list"></div>
+      <button class="btn btn-primary btn-full" style="margin-top:10px" onclick="adminAddTheme()">+ Ajouter un thème</button>
     </div>
 
-    <!-- Section Musiques -->
-    <div id="admin-section-music" style="display:none">
-      <div class="section-title" style="margin-bottom:10px">Musiques</div>
-      <p style="font-size:12px;color:var(--text-2);margin-bottom:14px">Gère les pistes audio. Héberge tes MP3 sur GitHub dans /sounds/ puis colle l'URL ici.</p>
-      <div id="admin-music-list"></div>
-      <button class="btn btn-glass btn-sm" onclick="adminAddTrack()" style="margin-top:10px;width:100%">+ Ajouter une piste</button>
-      <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
-        <div class="admin-label" style="margin-bottom:6px">Musique du podium</div>
-        <div class="agr-label-hint" style="margin-bottom:8px">Se déclenche automatiquement à la révélation des résultats</div>
-        <input class="field" style="font-size:12px;padding:8px 12px;width:100%"
-          placeholder="URL MP3 musique podium..."
-          id="admin-podium-url"
-          onchange="savePodiumTrack(this.value)">
-      </div>
-    </div>
+
 
     <!-- Section Gérer les jeux -->
     <div id="admin-section-games" style="display:none">
@@ -4506,6 +4492,59 @@ function stopPodiumMusic() {
 // toggleAudioPlayer / openMusicPicker → alias
 function toggleAudioPlayer() { openThemePicker(); }
 function openMusicPicker()    { openThemePicker(); }
+
+// ============================================================
+//  ADMIN — Musiques / Thèmes
+// ============================================================
+function showAdminMusicSection() {
+  db.ref(REF + '/audio').once('value', snap => {
+    const data   = snap.val() || {};
+    const tracks = Object.entries(data.tracks || {});
+    podiumUrl = data.podium_url || '';
+    const pEl = document.getElementById('admin-podium-url');
+    if (pEl) pEl.value = podiumUrl;
+    const list = document.getElementById('admin-theme-list');
+    if (!list) return;
+    if (!tracks.length) {
+      list.innerHTML = '<div style="color:var(--text-2);font-size:13px;padding:8px 0">Aucun thème — clique sur + Ajouter un thème</div>';
+      return;
+    }
+    list.innerHTML = tracks.map(([id, t]) => `
+      <div style="background:var(--glass);border:1px solid var(--border);border-radius:var(--r-lg);padding:12px;display:flex;flex-direction:column;gap:6px;margin-bottom:8px">
+        <div style="display:flex;gap:8px;align-items:center">
+          <input class="field" style="flex:1;font-size:13px;padding:7px 10px" placeholder="Nom du thème..."
+            value="${t.name}" id="atrack-name-${id}" onchange="saveTheme('${id}')">
+          <button class="btn btn-danger btn-sm" style="flex-shrink:0" onclick="deleteTheme('${id}')">✕</button>
+        </div>
+        <input class="field" style="font-size:12px;padding:7px 10px" placeholder="URL du fichier MP3..."
+          value="${t.url || ''}" id="atrack-url-${id}" onchange="saveTheme('${id}')">
+      </div>`).join('');
+  });
+}
+
+function adminAddTheme() {
+  const id = 'track_' + Date.now();
+  db.ref(REF + '/audio/tracks/' + id).set({ name: 'Nouveau thème', url: '' })
+    .then(() => { showAdminMusicSection(); loadAudioConfig(); });
+}
+
+function saveTheme(id) {
+  const name = document.getElementById('atrack-name-' + id)?.value.trim() || '';
+  const url  = document.getElementById('atrack-url-'  + id)?.value.trim() || '';
+  db.ref(REF + '/audio/tracks/' + id).set({ name, url })
+    .then(() => { toast('Thème sauvegardé !'); loadAudioConfig(); });
+}
+
+function deleteTheme(id) {
+  if (!confirm('Supprimer ce thème ?')) return;
+  db.ref(REF + '/audio/tracks/' + id).remove()
+    .then(() => { toast('Supprimé'); showAdminMusicSection(); loadAudioConfig(); });
+}
+
+function savePodiumMusic(url) {
+  db.ref(REF + '/audio/podium_url').set(url.trim())
+    .then(() => { podiumUrl = url.trim(); toast('Musique podium sauvegardée !'); });
+}
 
 init();
 loadGameImages();
