@@ -1149,6 +1149,8 @@ const GAMES_DEF = {
     img:'', img_banner:'' },
   faraway:       { id:'faraway',    reveal:true, rules:'https://media.play-in.com/pdf/rules_games/faraway_-_regles_fr.pdf',           name:'Faraway',                   emoji:'', desc:'8 cartes · décompte final', maxPlayers: 6,
     img:'', img_banner:'' },
+  kingdomino:    { id:'kingdomino', reveal:true, rules:'http://ludikerborg.free.fr/Jeux/kingdomino/kingdomino.pdf',                       name:'Kingdomino',                emoji:'', desc:'Dominos · décompte final', maxPlayers: 4,
+    img:'', img_banner:'' },
   narak:         { id:'narak',      rules:'https://iello.fr/wp-content/uploads/2021/01/Narak_Rulebook.pdf',           name:'Ruines Perdues de Narak',   emoji:'', desc:'Décompte final · 5 manches', maxPlayers: 4,
     img:'', img_banner:'' },
   citadelles:    { id:'citadelles', reveal:true, rules:'https://cdn.1j1ju.com/medias/cb/4e/c5-citadelles-regle.pdf',               name:'Citadelles',                emoji:'', desc:'7 quartiers · décompte final', maxPlayers: 7,
@@ -1390,6 +1392,7 @@ function startGame() {
   if (g.id === 'wingspan')      initWingspan();
   if (g.id === 'maraudeurs')    initMaraudeurs();
   if (g.id === 'faraway')       initFaraway();
+  if (g.id === 'kingdomino')    initKingdomino();
   if (g.id === 'narak')         initNarak();
   if (g.id === 'citadelles')    initCitadelles();
   if (g.id === 'viva_catrina')  initVivaCatrina();
@@ -3410,6 +3413,158 @@ function renderFarawayManche() {
     </div>`;
 }
 
+// ============================================================
+//  KINGDOMINO
+// ============================================================
+// ============================================================
+//  KINGDOMINO
+// ============================================================
+function initKingdomino() {
+  session.data.scores = Object.fromEntries(
+    session.players.map(p => [p.id, {
+      domaines: JSON.stringify([{ cases: '', couronnes: '' }]),
+    }])
+  );
+  // Options de jeu (partagées, pas par joueur)
+  session.data.options = { empire_milieu: false, harmonie: false };
+}
+
+function kgGetDomaines(pid) {
+  try { return JSON.parse(session.data.scores[pid].domaines || '[]'); }
+  catch(e) { return []; }
+}
+
+function kgSetDomaines(pid, domaines) {
+  session.data.scores[pid].domaines = JSON.stringify(domaines);
+}
+
+function kgUpdateDomaine(pid, idx, field, val) {
+  const domaines = kgGetDomaines(pid);
+  if (!domaines[idx]) return;
+  domaines[idx][field] = val === '' ? '' : parseInt(val) || 0;
+  kgSetDomaines(pid, domaines);
+  // Pas de mise à jour visuelle des pts (masqués)
+}
+
+function kgToggleOption(opt) {
+  session.data.options[opt] = !session.data.options[opt];
+  renderKingdominoManche();
+}
+
+function kgToggleBonus(pid, field) {
+  const cur = session.data.scores[pid][field];
+  session.data.scores[pid][field] = cur === 'oui' ? 'non' : 'oui';
+  renderKingdominoManche();
+}
+
+function kgAddDomaine(pid) {
+  const domaines = kgGetDomaines(pid);
+  domaines.push({ cases: '', couronnes: '' });
+  kgSetDomaines(pid, domaines);
+  renderKingdominoManche();
+}
+
+function kgRemoveDomaine(pid, idx) {
+  const domaines = kgGetDomaines(pid);
+  domaines.splice(idx, 1);
+  kgSetDomaines(pid, domaines);
+  renderKingdominoManche();
+}
+
+function renderKingdominoManche() {
+  const { players, data } = session;
+  const el = document.getElementById('view-game');
+  const opts = data.options || { empire_milieu: false, harmonie: false };
+  const empireOn  = opts.empire_milieu;
+  const harmonieOn = opts.harmonie;
+
+  el.innerHTML = `
+    <div class="manche-screen">
+      ${gameHeroHTML('kingdomino', 'Décompte final · domaines',
+        '<button class="btn btn-primary btn-sm" onclick="finishGame(\'kingdomino\')">Résultats →</button>')}
+
+      <!-- Options de règles optionnelles -->
+      <div class="card" style="margin-bottom:14px">
+        <div style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text-2);margin-bottom:10px">Règles optionnelles</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <button onclick="kgToggleOption('empire_milieu')"
+              style="width:28px;height:28px;border-radius:8px;border:1.5px solid ${empireOn?'var(--green)':'var(--border)'};background:${empireOn?'rgba(48,209,88,.15)':'var(--glass)'};cursor:pointer;font-size:14px;flex-shrink:0">
+              ${empireOn?'✓':''}
+            </button>
+            <div style="flex:1">
+              <div style="font-size:13px;font-weight:600;color:var(--text)">Empire du milieu</div>
+              <div style="font-size:11px;color:var(--text-2)">+10 pts si le château est exactement au centre de la grille 5×5</div>
+            </div>
+            <div title="Règle optionnelle : activer en début de partie si tout le monde joue avec cette règle"
+              style="width:20px;height:20px;border-radius:50%;border:1px solid var(--text-3);color:var(--text-3);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;cursor:default;flex-shrink:0">i</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <button onclick="kgToggleOption('harmonie')"
+              style="width:28px;height:28px;border-radius:8px;border:1.5px solid ${harmonieOn?'var(--green)':'var(--border)'};background:${harmonieOn?'rgba(48,209,88,.15)':'var(--glass)'};cursor:pointer;font-size:14px;flex-shrink:0">
+              ${harmonieOn?'✓':''}
+            </button>
+            <div style="flex:1">
+              <div style="font-size:13px;font-weight:600;color:var(--text)">Harmonie</div>
+              <div style="font-size:11px;color:var(--text-2)">+5 pts si aucun domino n'a été défaussé (grille 5×5 complète)</div>
+            </div>
+            <div title="Règle optionnelle : activer en début de partie si tout le monde joue avec cette règle"
+              style="width:20px;height:20px;border-radius:50%;border:1px solid var(--text-3);color:var(--text-3);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;cursor:default;flex-shrink:0">i</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Domaines par joueur -->
+      ${players.map(p => {
+        const d = data.scores[p.id];
+        const domaines = kgGetDomaines(p.id);
+        const cc = d.chateau_centre === 'oui';
+        const gc = d.grille_complete === 'oui';
+        return `<div class="card" style="margin-bottom:12px">
+          <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:10px;font-family:'Bebas Neue',sans-serif;letter-spacing:.05em">${p.name}</div>
+
+          <div style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text-2);margin-bottom:6px">Domaines (cases × couronnes)</div>
+          ${domaines.map((dom, i) => `
+            <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
+              <div style="font-size:11px;color:var(--text-3);min-width:22px">${i+1}.</div>
+              <input type="text" inputmode="numeric" class="agr-field" style="flex:1;text-align:center"
+                value="${dom.cases}" placeholder="cases"
+                oninput="kgUpdateDomaine('${p.id}',${i},'cases',this.value)">
+              <span style="color:var(--text-2);font-size:14px">×</span>
+              <input type="text" inputmode="numeric" class="agr-field" style="flex:1;text-align:center"
+                value="${dom.couronnes}" placeholder="👑"
+                oninput="kgUpdateDomaine('${p.id}',${i},'couronnes',this.value)">
+              ${domaines.length > 1 ? `<button onclick="kgRemoveDomaine('${p.id}',${i})"
+                style="background:none;border:none;color:var(--text-3);font-size:14px;cursor:pointer;padding:2px 6px">✕</button>` : ''}
+            </div>`).join('')}
+
+          <button onclick="kgAddDomaine('${p.id}')"
+            style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--accent);background:none;border:1px dashed rgba(100,210,255,.3);border-radius:8px;padding:5px 10px;cursor:pointer;font-family:inherit;margin-bottom:${empireOn||harmonieOn?'10px':'0'};width:100%;justify-content:center">
+            + Ajouter un domaine
+          </button>
+
+          <!-- Bonus optionnels — s'affichent seulement si la règle est activée -->
+          ${empireOn ? `<div style="display:flex;align-items:center;gap:8px;margin-top:8px">
+            <button onclick="kgToggleBonus('${p.id}','chateau_centre')"
+              style="flex:1;padding:8px;border-radius:10px;border:1px solid ${cc?'var(--green)':'var(--border)'};background:${cc?'rgba(48,209,88,.15)':'var(--glass)'};color:${cc?'var(--green)':'var(--text-2)'};font-family:inherit;font-size:12px;font-weight:600;cursor:pointer">
+              🏰 Château au centre${cc?' ✓':''}
+            </button>
+          </div>` : ''}
+          ${harmonieOn ? `<div style="display:flex;align-items:center;gap:8px;margin-top:8px">
+            <button onclick="kgToggleBonus('${p.id}','grille_complete')"
+              style="flex:1;padding:8px;border-radius:10px;border:1px solid ${gc?'var(--green)':'var(--border)'};background:${gc?'rgba(48,209,88,.15)':'var(--glass)'};color:${gc?'var(--green)':'var(--text-2)'};font-family:inherit;font-size:12px;font-weight:600;cursor:pointer">
+              ✅ Grille complète${gc?' ✓':''}
+            </button>
+          </div>` : ''}
+        </div>`;
+      }).join('')}
+
+      <div class="manche-footer">
+        <button class="btn btn-primary btn-full" onclick="finishGame('kingdomino')">Voir les résultats</button>
+      </div>
+    </div>`;
+}
+
 function renderCurrentManche() {
   if (!session) return;
   if (session.gameId === 'flip7')         renderFlip7Manche();
@@ -3420,6 +3575,7 @@ function renderCurrentManche() {
   if (session.gameId === 'wingspan')      renderWingspanManche();
   if (session.gameId === 'maraudeurs')    renderMaraudeursManche();
   if (session.gameId === 'faraway')       renderFarawayManche();
+  if (session.gameId === 'kingdomino')    renderKingdominoManche();
   if (session.gameId === 'narak')         renderNarakManche();
   if (session.gameId === 'citadelles')    renderCitadellesManche();
   if (session.gameId === 'viva_catrina')  renderVivaCatrinaManche();
@@ -3504,6 +3660,26 @@ function finishGame(gameId) {
         return sum + agrScore(item.id, data.scores[p.id][item.id] || 0);
       }, 0)
     })).sort((a, b) => b.total - a.total);
+  }
+
+  if (gameId === 'kingdomino') {
+    const kgOpts = data.options || {};
+    results = players.map(p => {
+      const d = data.scores[p.id];
+      const domaines = (() => { try { return JSON.parse(d.domaines || '[]'); } catch(e) { return []; } })();
+      const chateau_centre  = kgOpts.empire_milieu  && d.chateau_centre  === 'oui';
+      const grille_complete = kgOpts.harmonie       && d.grille_complete === 'oui';
+      const pts_domaines = domaines.reduce((sum, dom) => sum + ((parseInt(dom.cases)||0) * (parseInt(dom.couronnes)||0)), 0);
+      const bonus = (chateau_centre ? 10 : 0) + (grille_complete ? 5 : 0);
+      const total = pts_domaines + bonus;
+      const max_domain = domaines.length ? Math.max(...domaines.map(d => parseInt(d.cases)||0)) : 0;
+      const total_couronnes = domaines.reduce((s, d) => s + (parseInt(d.couronnes)||0), 0);
+      return { ...p, total, _max_domain: max_domain, _couronnes: total_couronnes };
+    }).sort((a,b) =>
+      b.total - a.total ||
+      b._max_domain - a._max_domain ||
+      b._couronnes - a._couronnes
+    );
   }
 
   if (gameId === 'faraway') {
@@ -3949,14 +4125,20 @@ function renderHistory() {
   el.innerHTML = sorted.map(s => {
     const w = s.results?.[0];
     const date = new Date(s.savedAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
-    return `<div class="history-row" onclick="showDetail('${s.id}')">
-      <div class="history-ico" style="font-size:20px;color:var(--accent);font-weight:700;min-width:24px">${s.gameName.charAt(0)}</div>
-      <div class="history-meta">
+    const g = GAMES[s.gameId];
+    const banner = g?.img_banner || g?.img || '';
+    return `<div class="history-row" onclick="showDetail('${s.id}')"
+      style="${banner ? `position:relative;overflow:hidden;background:transparent` : ''}">
+      ${banner ? `
+        <div style="position:absolute;inset:0;background-image:url('${banner}');background-size:cover;background-position:center;filter:brightness(.25);z-index:0;border-radius:inherit"></div>
+        <div style="position:absolute;inset:0;background:linear-gradient(to right,rgba(0,0,0,.5) 0%,rgba(0,0,0,.1) 100%);z-index:0;border-radius:inherit"></div>` : ''}
+      <div style="position:relative;z-index:1;font-size:20px;color:var(--accent);font-weight:700;min-width:24px;font-family:'Bebas Neue',sans-serif">${banner ? '' : s.gameName.charAt(0)}</div>
+      <div class="history-meta" style="position:relative;z-index:1">
         <div class="history-game">${s.gameName}</div>
         <div class="history-date">${date} · ${s.players.map(p => p.name).join(', ')}</div>
         ${w ? `<div class="history-winner">${w.name} · ${w.total} pts</div>` : ''}
       </div>
-      <div class="history-arrow">›</div>
+      <div class="history-arrow" style="position:relative;z-index:1">›</div>
     </div>`;
   }).join('');
 }
