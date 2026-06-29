@@ -899,8 +899,10 @@ body::before {
     <section class="view" id="view-stats">
       <div class="section-title">Statistiques</div>
       <div class="stats-grid" id="stats-grid"></div>
-      <div class="section-title">Palmarès</div>
-      <div class="card" id="palmares"></div>
+      <div class="section-title">Palmarès global</div>
+      <div class="card" id="palmares" style="margin-bottom:14px"></div>
+      <div class="section-title">Par jeu</div>
+      <div id="stats-by-game"></div>
     </section>
 
     <!-- COMPTEUR BASIQUE -->
@@ -3871,36 +3873,97 @@ function showDetail(id) {
 function deleteSession() {
   if (!selectedSessId || !confirm('Supprimer cette partie ?')) return;
   sessions = sessions.filter(s => s.id !== selectedSessId); saveLocal();
-  db.ref(REF + '/sessions/' + selectedSessId).remove();
-  closeModal('modal-detail'); renderHistory(); toast('Supprimée');
+  // Supprimer dans Firebase — chercher dans /users/{uid}/sessions/ si connecté
+  if (currentUser) {
+    db.ref(REF + '/users/' + currentUser.uid + '/sessions/' + selectedSessId).remove();
+  } else {
+    db.ref(REF + '/sessions/' + selectedSessId).remove();
+  }
+  closeModal('modal-detail'); renderHistory(); renderStats(); toast('Supprimée');
 }
 
 // ============================================================
 //  STATS
 // ============================================================
 function renderStats() {
+  if (!sessions.length) {
+    document.getElementById('stats-grid').innerHTML = '';
+    document.getElementById('palmares').innerHTML = '<div class="empty"><div>Aucune partie sauvegardée</div></div>';
+    const byGame = document.getElementById('stats-by-game');
+    if (byGame) byGame.innerHTML = '';
+    return;
+  }
+
   const total = sessions.length;
-  const uniq = new Set(sessions.map(s => s.gameId)).size;
+  const uniq  = new Set(sessions.map(s => s.gameId)).size;
+  const uniquePlayers = new Set(sessions.flatMap(s => s.players?.map(p => p.name) || [])).size;
+
   document.getElementById('stats-grid').innerHTML = `
     <div class="stat-card"><div class="stat-val">${total}</div><div class="stat-label">Parties jouées</div></div>
     <div class="stat-card"><div class="stat-val">${uniq}</div><div class="stat-label">Jeux différents</div></div>
     <div class="stat-card"><div class="stat-val">${total ? Math.round(total / Math.max(1, uniq)) : 0}</div><div class="stat-label">Parties / jeu</div></div>
-    <div class="stat-card"><div class="stat-val">${new Set(sessions.flatMap(s => s.players?.map(p => p.name) || [])).size}</div><div class="stat-label">Joueurs uniques</div></div>`;
+    <div class="stat-card"><div class="stat-val">${uniquePlayers}</div><div class="stat-label">Joueurs uniques</div></div>`;
 
+  // Palmarès global
   const wins = {};
   sessions.forEach(s => {
-    s.players?.forEach(p => { if (!wins[p.name]) wins[p.name] = { name: p.name, emoji: p.emoji, wins: 0, games: 0 }; wins[p.name].games++; });
+    s.players?.forEach(p => {
+      if (!wins[p.name]) wins[p.name] = { name: p.name, wins: 0, games: 0 };
+      wins[p.name].games++;
+    });
     if (s.results?.[0]) { const n = s.results[0].name; if (wins[n]) wins[n].wins++; }
   });
-  const lb = Object.values(wins).filter(w => w.games > 0).sort((a, b) => b.wins - a.wins);
+  const lb = Object.values(wins).filter(w => w.games > 0).sort((a,b) => b.wins - a.wins || b.games - a.games);
   document.getElementById('palmares').innerHTML = lb.length ? lb.map((w, i) => `
     <div style="display:flex;align-items:center;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.06)">
-      <span style="width:22px;font-size:12px;color:var(--text-3)">${i + 1}.</span>
+      <span style="width:22px;font-size:12px;color:var(--text-3)">${i+1}.</span>
       <span style="flex:1;font-size:14px">${w.name}</span>
       <span style="color:var(--gold);font-weight:700;margin-right:12px">${w.wins}</span>
-      <span style="font-size:12px;color:var(--text-2)">${w.games} parties</span>
-    </div>`).join('')
-    : '<div class="empty"><div>Jouez des parties !</div></div>';
+      <span style="font-size:12px;color:var(--text-2)">${w.games} partie${w.games > 1 ? 's' : ''}</span>
+    </div>`).join('') : '';
+
+  // Stats par jeu
+  const byGameEl = document.getElementById('stats-by-game');
+  if (!byGameEl) return;
+
+  // Grouper par jeu
+  const gameMap = {};
+  sessions.forEach(s => {
+    const gid = s.gameId;
+    if (!gameMap[gid]) gameMap[gid] = {
+      name: s.gameName || GAMES[gid]?.name || gid,
+      sessions: [], wins: {}
+    };
+    gameMap[gid].sessions.push(s);
+    s.players?.forEach(p => {
+      if (!gameMap[gid].wins[p.name]) gameMap[gid].wins[p.name] = { wins: 0, games: 0 };
+      gameMap[gid].wins[p.name].games++;
+    });
+    if (s.results?.[0]) {
+      const n = s.results[0].name;
+      if (gameMap[gid].wins[n]) gameMap[gid].wins[n].wins++;
+    }
+  });
+
+  byGameEl.innerHTML = Object.values(gameMap).sort((a,b) => b.sessions.length - a.sessions.length).map(g => {
+    const topPlayers = Object.entries(g.wins)
+      .map(([name, w]) => ({ name, ...w }))
+      .sort((a,b) => b.wins - a.wins || b.games - a.games)
+      .slice(0, 5);
+    return `<div class="card" style="margin-bottom:10px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--text);letter-spacing:.05em">${g.name}</div>
+        <div style="font-size:12px;color:var(--text-2)">${g.sessions.length} partie${g.sessions.length>1?'s':''}</div>
+      </div>
+      ${topPlayers.length ? topPlayers.map((p, i) => `
+        <div style="display:flex;align-items:center;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.05)">
+          <span style="width:20px;font-size:11px;color:var(--text-3)">${i+1}.</span>
+          <span style="flex:1;font-size:13px">${p.name}</span>
+          <span style="color:var(--gold);font-weight:700;margin-right:10px;font-size:14px">${p.wins}</span>
+          <span style="font-size:11px;color:var(--text-2)">${p.games} partie${p.games>1?'s':''}</span>
+        </div>`).join('') : '<div style="font-size:12px;color:var(--text-3)">Aucun résultat enregistré</div>'}
+    </div>`;
+  }).join('');
 }
 
 // ============================================================
@@ -4409,12 +4472,12 @@ function loadAudioConfig() {
       activeThemeIdx = saved;
       playTheme(saved);
     } else if (audioTracks.length > 0) {
-      // Chercher "Medieval Tavern" en premier, sinon prendre le premier thème
       const medievalIdx = audioTracks.findIndex(t => t.name.toLowerCase().includes('medieval'));
       const defaultIdx = medievalIdx >= 0 ? medievalIdx : 0;
       activeThemeIdx = defaultIdx;
       playTheme(defaultIdx);
     }
+    updateThemeBtn();
   });
 }
 
@@ -4549,6 +4612,88 @@ function deleteTheme(id) {
 function savePodiumMusic(url) {
   db.ref(REF + '/audio/podium_url').set(url.trim())
     .then(() => { podiumUrl = url.trim(); toast('Musique podium sauvegardée !'); });
+}
+
+// ============================================================
+//  LANCEUR DE DÉS
+// ============================================================
+const DICE_SIDES = { D4:4, D6:6, D8:8, D10:10, D12:12, D20:20 };
+let diceState = { type:'D6', count:1 };
+
+function initDiceView() {
+  selectDice(diceState.type);
+  selectDiceCount(diceState.count);
+}
+
+function selectDice(type) {
+  diceState.type = type;
+  Object.keys(DICE_SIDES).forEach(d => {
+    const btn = document.getElementById('dice-btn-' + d);
+    if (btn) btn.className = 'btn ' + (d === type ? 'btn-primary' : 'btn-glass');
+  });
+}
+
+function selectDiceCount(n) {
+  diceState.count = n;
+  for (let i = 1; i <= 6; i++) {
+    const btn = document.getElementById('dice-count-' + i);
+    if (btn) btn.className = 'btn ' + (i === n ? 'btn-primary' : 'btn-glass');
+  }
+}
+
+function rollDice() {
+  const { type, count } = diceState;
+  const sides = DICE_SIDES[type];
+  const facesEl = document.getElementById('dice-faces');
+  const totalEl = document.getElementById('dice-total');
+  if (!facesEl) return;
+
+  facesEl.innerHTML = Array.from({length: count}, (_, i) =>
+    `<div class="dice-face rolling" id="dface-${i}">
+      <span id="dval-${i}">?</span>
+      <span class="dice-type-label">${type}</span>
+    </div>`
+  ).join('');
+  if (totalEl) totalEl.style.display = 'none';
+
+  const interval = setInterval(() => {
+    for (let i = 0; i < count; i++) {
+      const el = document.getElementById('dval-' + i);
+      if (el) el.textContent = Math.ceil(Math.random() * sides);
+    }
+  }, 80);
+
+  setTimeout(() => {
+    clearInterval(interval);
+    const results = [];
+    for (let i = 0; i < count; i++) {
+      const val = Math.ceil(Math.random() * sides);
+      results.push(val);
+      const face = document.getElementById('dface-' + i);
+      const valEl = document.getElementById('dval-' + i);
+      if (valEl) valEl.textContent = val;
+      if (face) {
+        face.classList.remove('rolling');
+        setTimeout(() => face.classList.add('landed'), i * 80);
+      }
+    }
+    if (count > 1 && totalEl) {
+      const sum = results.reduce((a,b) => a+b, 0);
+      setTimeout(() => { totalEl.textContent = '= ' + sum; totalEl.style.display = 'block'; }, count * 80 + 200);
+    }
+    results.forEach((val, i) => {
+      if (val === sides) {
+        setTimeout(() => {
+          const face = document.getElementById('dface-' + i);
+          if (face) {
+            face.style.borderColor = 'var(--gold)';
+            face.style.background = 'rgba(255,214,10,.15)';
+            face.querySelector('span').style.color = 'var(--gold)';
+          }
+        }, i * 80 + 400);
+      }
+    });
+  }, 600);
 }
 
 init();
