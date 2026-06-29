@@ -1947,15 +1947,7 @@ function renderSevenWondersManche() {
             </div>
           </div>`;
         }).join('')}
-        <!-- Points science calculés live -->
-        <div style="display:flex;align-items:center;padding-top:8px;margin-top:4px;border-top:1px solid rgba(255,255,255,.08)">
-          <div style="flex:1;font-size:12px;color:var(--green);font-weight:600">Points science calculés</div>
-          <div style="display:flex;gap:6px">
-            ${players.map((p, i) => `<div style="width:72px;text-align:center;font-size:14px;font-weight:700;color:var(--green)" id="sw-sci-${p.id}">
-              ${totaux[i].sciPts}
-            </div>`).join('')}
-          </div>
-        </div>
+        <!-- Points science masqués -->
       </div>
 
       <!-- TOTAL -->
@@ -2960,7 +2952,7 @@ function renderMaraudeursManche() {
         <div style="display:flex;align-items:center;padding-top:8px;margin-top:4px;border-top:1px solid rgba(255,255,255,.08)">
           <div style="flex:1;font-size:12px;color:var(--gold);font-weight:600">Bonus majorité</div>
           <div style="display:flex;gap:6px">
-            ${players.map(p => `<div style="width:72px;text-align:center;font-size:11px;font-weight:700;color:var(--gold)" id="mar-bonus-${p.id}">
+            ${players.map(p => `<div class="score-pts-label" style="width:72px;text-align:center" id="mar-bonus-${p.id}">
               ${bonus[p.id] > 0 ? '+' + bonus[p.id] + ' (majorité)' : ''}
             </div>`).join('')}
           </div>
@@ -3917,7 +3909,6 @@ function launchSimplePodium(results) {
   document.body.appendChild(overlay);
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
   playPodiumMusic();
-  playPodiumMusic();
 
   // Apparition rapide de toutes les cartes
   results.forEach((r, rank) => {
@@ -4836,11 +4827,23 @@ function updateThemeBtn() {
 
 // Musique podium
 function playPodiumMusic() {
-  if (!podiumUrl) return;
   const audio = document.getElementById('bg-audio');
   const pod   = document.getElementById('podium-audio');
-  if (audio) audio.volume = 0.2; // baisser l'ambiance
-  if (pod)   { pod.src = podiumUrl; pod.volume = 0.8; pod.play().catch(()=>{}); }
+  if (audio) audio.volume = 0.2;
+  const doPlay = (url) => {
+    if (!url) return;
+    if (pod) { pod.src = url; pod.volume = 0.8; pod.play().catch(e => console.warn('Podium audio error:', e)); }
+  };
+  if (podiumUrl) {
+    doPlay(podiumUrl);
+  } else {
+    // Charger depuis Firebase si pas encore en mémoire
+    db.ref(REF + '/audio/podium_url').once('value', snap => {
+      const url = snap.val() || '';
+      podiumUrl = url;
+      doPlay(url);
+    });
+  }
 }
 function stopPodiumMusic() {
   const pod = document.getElementById('podium-audio');
