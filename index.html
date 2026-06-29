@@ -410,17 +410,23 @@ body::before {
 /* ---- HISTORY ---- */
 .history-row {
   display: flex; align-items: center; gap: 12px;
-  padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,.06);
+  padding: 12px; border-bottom: 1px solid rgba(255,255,255,.06);
   cursor: pointer; transition: opacity .15s;
+  border-radius: var(--r-lg); margin-bottom: 2px;
 }
 .history-row:last-child { border-bottom: none; }
-.history-row:hover { opacity: .75; }
+.history-row:hover { opacity: .85; }
+.history-row.has-banner {
+  padding: 14px 16px; min-height: 80px;
+  border: 1px solid rgba(255,255,255,.08);
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
 .history-ico { font-size: 26px; flex-shrink: 0; }
 .history-meta { flex: 1; min-width: 0; }
 .history-game { font-size: 14px; font-weight: 600; }
 .history-date { font-size: 12px; color: var(--text-2); margin-top: 1px; }
 .history-winner { font-size: 12px; font-weight: 600; color: var(--green); margin-top: 2px; }
-.history-arrow { color: var(--text-3); font-size: 18px; }
+.history-arrow { color: rgba(255,255,255,.5); font-size: 18px; }
 
 /* ---- STATS ---- */
 .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
@@ -4106,18 +4112,25 @@ function renderHistory() {
     const date = new Date(s.savedAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
     const g = GAMES[s.gameId];
     const banner = g?.img_banner || g?.img || '';
-    return `<div class="history-row" onclick="showDetail('${s.id}')"
-      style="${banner ? `position:relative;overflow:hidden;background:transparent` : ''}">
+    return `<div class="history-row${banner ? ' has-banner' : ''}" onclick="showDetail('${s.id}')"
+      style="${banner ? 'position:relative;overflow:hidden;background:var(--glass)' : ''}">
       ${banner ? `
-        <div style="position:absolute;inset:0;background-image:url('${banner}');background-size:cover;background-position:center;filter:brightness(.25);z-index:0;border-radius:inherit"></div>
-        <div style="position:absolute;inset:0;background:linear-gradient(to right,rgba(0,0,0,.5) 0%,rgba(0,0,0,.1) 100%);z-index:0;border-radius:inherit"></div>` : ''}
-      <div style="position:relative;z-index:1;font-size:20px;color:var(--accent);font-weight:700;min-width:24px;font-family:'Bebas Neue',sans-serif">${banner ? '' : s.gameName.charAt(0)}</div>
-      <div class="history-meta" style="position:relative;z-index:1">
-        <div class="history-game">${s.gameName}</div>
-        <div class="history-date">${date} · ${s.players.map(p => p.name).join(', ')}</div>
-        ${w ? `<div class="history-winner">${w.name} · ${w.total} pts</div>` : ''}
+        <div style="position:absolute;inset:0;
+          background-image:url('${banner}');
+          background-size:cover;
+          background-position:center;
+          filter:brightness(.3);
+          z-index:0"></div>
+        <div style="position:absolute;inset:0;
+          background:linear-gradient(90deg,rgba(0,0,0,.7) 0%,rgba(0,0,0,.2) 60%,rgba(0,0,0,.4) 100%);
+          z-index:1"></div>` : ''}
+      <div style="position:relative;z-index:2;flex-shrink:0;font-size:20px;color:var(--accent);font-weight:700;min-width:24px;font-family:'Bebas Neue',sans-serif">${banner ? '' : s.gameName.charAt(0)}</div>
+      <div class="history-meta" style="position:relative;z-index:2">
+        <div class="history-game" style="${banner ? 'color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.8)' : ''}">${s.gameName}</div>
+        <div class="history-date" style="${banner ? 'color:rgba(255,255,255,.7)' : ''}">${date} · ${s.players.map(p => p.name).join(', ')}</div>
+        ${w ? `<div class="history-winner" style="color:#4ade80">${w.name} · ${w.total} pts</div>` : ''}
       </div>
-      <div class="history-arrow" style="position:relative;z-index:1">›</div>
+      <div class="history-arrow" style="position:relative;z-index:2">›</div>
     </div>`;
   }).join('');
 }
