@@ -85,7 +85,6 @@ body::before {
   transition: all .2s;
   display: flex; flex-direction: column; align-items: center; gap: 2px;
 }
-.nav-tab .ti { font-size: 17px; }
 .nav-tab:hover { color: var(--text); background: var(--glass); }
 .nav-tab.active { background: var(--glass-hi); color: var(--text); font-weight: 600; }
 
@@ -829,19 +828,19 @@ body::before {
   <nav class="nav">
     <div class="nav-inner">
       <button class="nav-tab active" onclick="showView('home')">
-        <span class="ti"></span><span>Jouer</span>
+        <span>Jouer</span>
       </button>
       <button class="nav-tab" onclick="showView('history')">
-        <span class="ti"></span><span>Historique</span>
+        <span>Historique</span>
       </button>
       <button class="nav-tab" onclick="showView('stats')">
-        <span class="ti"></span><span>Stats</span>
+        <span>Stats</span>
       </button>
       <button class="nav-tab" onclick="showView('counter')">
-        <span class="ti"></span><span>Compteur</span>
+        <span>Compteur</span>
       </button>
       <button class="nav-tab" onclick="showView('dice')">
-        <span class="ti">🎲</span><span>Dés</span>
+        <span>Dés</span>
       </button>
     </div>
   </nav>
@@ -927,13 +926,13 @@ body::before {
       <!-- Choix du type de dé -->
       <div style="margin-bottom:16px">
         <div style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text-2);margin-bottom:8px">Type de dé</div>
-        <div style="display:flex;flex-wrap:wrap;gap:8px" id="dice-type-btns">
-          ${['D4','D6','D8','D10','D12','D20'].map(d =>
-            `<button id="dice-btn-${d}" onclick="selectDice('${d}')"
-              class="btn btn-glass" style="flex:1;min-width:60px;font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:.05em">
-              ${d}
-            </button>`
-          ).join('')}
+        <div style="display:flex;flex-wrap:wrap;gap:8px">
+          <button id="dice-btn-D4"  onclick="selectDice('D4')"  class="btn btn-glass" style="flex:1;min-width:60px;font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:.05em">D4</button>
+          <button id="dice-btn-D6"  onclick="selectDice('D6')"  class="btn btn-primary" style="flex:1;min-width:60px;font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:.05em">D6</button>
+          <button id="dice-btn-D8"  onclick="selectDice('D8')"  class="btn btn-glass" style="flex:1;min-width:60px;font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:.05em">D8</button>
+          <button id="dice-btn-D10" onclick="selectDice('D10')" class="btn btn-glass" style="flex:1;min-width:60px;font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:.05em">D10</button>
+          <button id="dice-btn-D12" onclick="selectDice('D12')" class="btn btn-glass" style="flex:1;min-width:60px;font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:.05em">D12</button>
+          <button id="dice-btn-D20" onclick="selectDice('D20')" class="btn btn-glass" style="flex:1;min-width:60px;font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:.05em">D20</button>
         </div>
       </div>
 
@@ -941,12 +940,12 @@ body::before {
       <div style="margin-bottom:20px">
         <div style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text-2);margin-bottom:8px">Nombre de dés</div>
         <div style="display:flex;gap:8px">
-          ${[1,2,3,4,5,6].map(n =>
-            `<button id="dice-count-${n}" onclick="selectDiceCount(${n})"
-              class="btn btn-glass" style="flex:1;font-size:15px;font-weight:700">
-              ${n}
-            </button>`
-          ).join('')}
+          <button id="dice-count-1" onclick="selectDiceCount(1)" class="btn btn-primary" style="flex:1;font-size:15px;font-weight:700">1</button>
+          <button id="dice-count-2" onclick="selectDiceCount(2)" class="btn btn-glass" style="flex:1;font-size:15px;font-weight:700">2</button>
+          <button id="dice-count-3" onclick="selectDiceCount(3)" class="btn btn-glass" style="flex:1;font-size:15px;font-weight:700">3</button>
+          <button id="dice-count-4" onclick="selectDiceCount(4)" class="btn btn-glass" style="flex:1;font-size:15px;font-weight:700">4</button>
+          <button id="dice-count-5" onclick="selectDiceCount(5)" class="btn btn-glass" style="flex:1;font-size:15px;font-weight:700">5</button>
+          <button id="dice-count-6" onclick="selectDiceCount(6)" class="btn btn-glass" style="flex:1;font-size:15px;font-weight:700">6</button>
         </div>
       </div>
 
