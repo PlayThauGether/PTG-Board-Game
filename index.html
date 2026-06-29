@@ -410,16 +410,17 @@ body::before {
 /* ---- HISTORY ---- */
 .history-row {
   display: flex; align-items: center; gap: 12px;
-  padding: 12px; border-bottom: 1px solid rgba(255,255,255,.06);
+  padding: 14px 16px;
   cursor: pointer; transition: opacity .15s;
-  border-radius: var(--r-lg); margin-bottom: 2px;
+  border-radius: var(--r-lg);
+  background: var(--glass);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  position: relative;
 }
-.history-row:last-child { border-bottom: none; }
 .history-row:hover { opacity: .85; }
 .history-row.has-banner {
-  padding: 14px 16px; min-height: 80px;
-  border: 1px solid rgba(255,255,255,.08);
-  border-bottom: 1px solid rgba(255,255,255,.08);
+  min-height: 80px; background: #111; padding: 14px 16px;
 }
 .history-ico { font-size: 26px; flex-shrink: 0; }
 .history-meta { flex: 1; min-width: 0; }
@@ -898,7 +899,7 @@ body::before {
     <!-- HISTORY -->
     <section class="view" id="view-history">
       <div class="section-title">Parties jouées</div>
-      <div class="card" id="history-list"></div>
+      <div id="history-list" style="display:flex;flex-direction:column;gap:8px"></div>
     </section>
 
     <!-- STATS -->
@@ -4112,25 +4113,26 @@ function renderHistory() {
     const date = new Date(s.savedAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
     const g = GAMES[s.gameId];
     const banner = g?.img_banner || g?.img || '';
-    return `<div class="history-row${banner ? ' has-banner' : ''}" onclick="showDetail('${s.id}')"
-      style="${banner ? 'position:relative;overflow:hidden;background:var(--glass)' : ''}">
-      ${banner ? `
-        <div style="position:absolute;inset:0;
-          background-image:url('${banner}');
-          background-size:cover;
-          background-position:center;
-          filter:brightness(.3);
-          z-index:0"></div>
-        <div style="position:absolute;inset:0;
-          background:linear-gradient(90deg,rgba(0,0,0,.7) 0%,rgba(0,0,0,.2) 60%,rgba(0,0,0,.4) 100%);
-          z-index:1"></div>` : ''}
-      <div style="position:relative;z-index:2;flex-shrink:0;font-size:20px;color:var(--accent);font-weight:700;min-width:24px;font-family:'Bebas Neue',sans-serif">${banner ? '' : s.gameName.charAt(0)}</div>
-      <div class="history-meta" style="position:relative;z-index:2">
-        <div class="history-game" style="${banner ? 'color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.8)' : ''}">${s.gameName}</div>
-        <div class="history-date" style="${banner ? 'color:rgba(255,255,255,.7)' : ''}">${date} · ${s.players.map(p => p.name).join(', ')}</div>
-        ${w ? `<div class="history-winner" style="color:#4ade80">${w.name} · ${w.total} pts</div>` : ''}
+    if (banner) {
+      return `<div class="history-row has-banner" onclick="showDetail('${s.id}')">
+        <div style="position:absolute;inset:0;background-image:url('${banner}');background-size:cover;background-position:center;filter:brightness(.32)"></div>
+        <div style="position:absolute;inset:0;background:linear-gradient(90deg,rgba(0,0,0,.75) 0%,rgba(0,0,0,.15) 100%)"></div>
+        <div style="position:relative;z-index:1;flex:1;min-width:0">
+          <div style="font-size:15px;font-weight:700;color:#fff;text-shadow:0 1px 6px rgba(0,0,0,.9)">${s.gameName}</div>
+          <div style="font-size:12px;color:rgba(255,255,255,.65);margin-top:2px">${date} · ${s.players.map(p => p.name).join(', ')}</div>
+          ${w ? `<div style="font-size:12px;font-weight:700;color:#4ade80;margin-top:3px">${w.name} · ${w.total} pts</div>` : ''}
+        </div>
+        <div style="position:relative;z-index:1;color:rgba(255,255,255,.5);font-size:18px;flex-shrink:0;margin-left:8px">›</div>
+      </div>`;
+    }
+    return `<div class="history-row" onclick="showDetail('${s.id}')">
+      <div style="font-size:20px;color:var(--accent);font-weight:700;min-width:24px;font-family:'Bebas Neue',sans-serif;flex-shrink:0">${s.gameName.charAt(0)}</div>
+      <div class="history-meta">
+        <div class="history-game">${s.gameName}</div>
+        <div class="history-date">${date} · ${s.players.map(p => p.name).join(', ')}</div>
+        ${w ? `<div class="history-winner">${w.name} · ${w.total} pts</div>` : ''}
       </div>
-      <div class="history-arrow" style="position:relative;z-index:2">›</div>
+      <div class="history-arrow">›</div>
     </div>`;
   }).join('');
 }
