@@ -1082,11 +1082,10 @@ body::before {
 
 <!-- MODAL: historique détail -->
 <div class="modal-overlay" id="modal-detail">
-  <div class="modal">
+  <div class="modal" style="max-height:90vh;overflow-y:auto;padding-bottom:24px">
     <div class="modal-handle"></div>
-    <div class="modal-title">Détail de la partie</div>
     <div id="modal-detail-content"></div>
-    <div class="modal-actions">
+    <div class="modal-actions" style="margin-top:16px">
       <button class="btn btn-danger btn-sm" onclick="deleteSession()">Supprimer</button>
       <button class="btn btn-glass btn-sm" onclick="closeModal('modal-detail')">Fermer</button>
     </div>
@@ -4137,22 +4136,93 @@ function renderHistory() {
   }).join('');
 }
 
+const SCORE_LABELS = {
+  agricola:     { champs:'Champs', paturages:'Pâturages', cereales:'Céréales', legumes:'Légumes', moutons:'Moutons', sangliers:'Sangliers', boeufs:'Bœufs', etables:'Étables', cases_vides:'Cases vides', habitation:'Habitation', membres:'Membres famille', amenagements:'Aménagements', points_speciaux:'Pts spéciaux', mendicite:'Mendicité' },
+  dewan:        { histoire:'Tuiles Histoire', feu:'Feu', groupes:'Groupes camps', baies:'Baies', terrain:'Terrain (départage)' },
+  seven_wonders:{ militaire:'Militaire', trésor:'Trésor', merveille:'Merveille', civil:'Civil', commercial:'Commercial', guildes:'Guildes', science_roues:'Roues', science_compas:'Compas', science_tablettes:'Tablettes' },
+  wingspan:     { oiseaux:'Oiseaux', bonus:'Carte Bonus', objectifs:'Objectifs', oeufs:'Œufs', nourriture:'Nourriture', cartes_gl:'Cartes glissées' },
+  iaww:         { bruts:'PV bruts', combos:'Combos', generaux:'Généraux', financiers:'Financiers', cartes_emp:'Cartes Empire' },
+  pillards:     { pv_partie:'PV partie', valkyrie:'Valkyrie', armement:'Armement', offrandes:'Offrandes', equipage:'Équipage', or:'Or', fer:'Fer', betail:'Bétail' },
+  maraudeurs:   { gloire:'Gloire', artefacts:'Artefacts', butin:'Butin', ferme:'Ferme', mur:'Mur', bastion:'Bastion', propheties:'Prophéties', terreur:'Terreur', faveur:'Faveur (départ.)' },
+  narak:        { recherche:'Recherche', temple:'Temple', idoles:'Idoles', empl_vides:'Empl. vides', gardiens:'Gardiens', cartes:'Cartes', peurs:'Cartes Peur', tuiles_peur:'Tuiles Peur' },
+  citadelles:   { quartiers:'Quartiers', cinq_couleurs:'5 couleurs (+3)', premier_8:'Premier 8 (+4)', autre_8:'Autres 8 (+2)' },
+  viva_catrina: { ballons_rouge:'Ballons Rouges', ballons_bleu:'Ballons Bleus', ballons_vert:'Ballons Verts', ballons_jaune:'Ballons Jaunes', visiteurs:'Visiteurs', papillons:'Papillons', chimeres5:'Chimères 5pts', chimeres3:'Chimères 3pts', echoppes:'Échoppes', autels:'Autels' },
+  faraway:      { carte1:'Carte 1', carte2:'Carte 2', carte3:'Carte 3', carte4:'Carte 4', carte5:'Carte 5', carte6:'Carte 6', carte7:'Carte 7', carte8:'Carte 8', sanctuaires:'Sanctuaires' },
+  kingdomino:   {},
+};
+
 function showDetail(id) {
   selectedSessId = id;
   const s = sessions.find(x => x.id === id); if (!s) return;
-  const medals = ['1er', '2e', '3e'];
-  const date = new Date(s.savedAt).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  const rankEmojis = ['🥇','🥈','🥉'];
+  const rankColors = ['#FFD60A','#C0C0C0','#CD7F32'];
+  const date = new Date(s.savedAt).toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+  const g = GAMES[s.gameId];
+  const banner = g?.img_banner || g?.img || '';
+  const labels = SCORE_LABELS[s.gameId] || {};
+
+  // Construire le détail des scores par joueur
+  function playerScoreDetail(r) {
+    const pid = r.id;
+    const d = s.data?.scores?.[pid] || {};
+    const entries = Object.entries(labels).filter(([k]) => d[k] !== undefined && d[k] !== '' && d[k] !== 'non');
+    if (!entries.length) return '';
+    return entries.map(([k, label]) => {
+      const val = d[k];
+      if (val === 'oui') return `<div style="display:flex;justify-content:space-between;padding:3px 0"><span style="color:var(--text-2)">${label}</span><span style="color:var(--green)">✓</span></div>`;
+      return `<div style="display:flex;justify-content:space-between;padding:3px 0"><span style="color:var(--text-2)">${label}</span><span style="font-weight:600">${val}</span></div>`;
+    }).join('');
+  }
+
   document.getElementById('modal-detail-content').innerHTML = `
-    <div style="margin-bottom:12px">
-      <div style="font-size:20px;font-weight:700">${s.gameName}</div>
-      <div style="font-size:13px;color:var(--text-2);margin-top:2px">${date}</div>
+    <!-- Header avec bannière -->
+    <div style="position:relative;height:110px;margin:-20px -20px 16px;overflow:hidden;border-radius:16px 16px 0 0">
+      ${banner
+        ? `<div style="position:absolute;inset:0;background-image:url('${banner}');background-size:cover;background-position:center;filter:brightness(.4)"></div>
+           <div style="position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,.1),rgba(0,0,0,.7))"></div>`
+        : `<div style="position:absolute;inset:0;background:linear-gradient(135deg,#1a3a6b,#0d1f3c)"></div>`}
+      <div style="position:absolute;bottom:12px;left:16px;right:16px">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:24px;color:#fff;letter-spacing:.06em">${s.gameName}</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.6);margin-top:2px">${date}</div>
+      </div>
     </div>
-    ${s.results ? s.results.map((r, i) => `
-      <div style="display:flex;align-items:center;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.07)">
-        <span style="font-size:18px;width:30px">${medals[i] || (i + 1) + '.'}</span>
-        <span style="flex:1;font-size:14px">${r.name}</span>
-        <strong style="color:${i === 0 ? 'var(--green)' : 'var(--text)'}">${r.total} pts</strong>
-      </div>`).join('') : '<div style="color:var(--text-2)">Aucun résultat</div>'}`;
+
+    <!-- Podium visuel (max 3 premiers) -->
+    ${s.results?.length ? `
+    <div style="display:flex;gap:8px;margin-bottom:16px;align-items:flex-end">
+      ${s.results.slice(0,3).map((r,i) => `
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
+          <div style="font-size:${i===0?'22':'18'}px">${rankEmojis[i]||''}</div>
+          <div style="font-size:${i===0?'22':'18'}px;font-weight:900;color:${i===0?rankColors[0]:rankColors[i]||'var(--text)'}">
+            ${r.total}
+          </div>
+          <div style="font-size:11px;font-weight:600;color:var(--text);text-align:center">${r.name}</div>
+          <div style="width:100%;height:${i===0?80:i===1?60:45}px;
+            background:${i===0?'rgba(255,214,10,.12)':i===1?'rgba(192,192,192,.1)':'rgba(205,127,50,.1)'};
+            border:1px solid ${i===0?'rgba(255,214,10,.3)':i===1?'rgba(192,192,192,.2)':'rgba(205,127,50,.2)'};
+            border-radius:10px 10px 0 0;margin-top:4px"></div>
+        </div>`).join('')}
+    </div>` : ''}
+
+    <!-- Tous les joueurs avec détails dépliables -->
+    <div style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text-2);margin-bottom:8px">Scores détaillés</div>
+    ${s.results ? s.results.map((r, i) => {
+      const detail = playerScoreDetail(r);
+      const uid = 'det-' + id + '-' + i;
+      return `<div style="background:var(--glass);border:1px solid var(--border);border-radius:var(--r-lg);margin-bottom:6px;overflow:hidden">
+        <div onclick="document.getElementById('${uid}').style.display=document.getElementById('${uid}').style.display==='none'?'block':'none'"
+          style="display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer">
+          <span style="font-size:16px">${rankEmojis[i]||((i+1)+'.')}</span>
+          <span style="flex:1;font-size:14px;font-weight:600">${r.name}</span>
+          <span style="font-size:16px;font-weight:800;color:${i===0?rankColors[0]:'var(--text)'}">${r.total} pts</span>
+          ${detail ? '<span style="color:var(--text-3);font-size:12px;margin-left:6px">▾</span>' : ''}
+        </div>
+        ${detail ? `<div id="${uid}" style="display:none;padding:4px 14px 12px;border-top:1px solid rgba(255,255,255,.06);font-size:12px">
+          ${detail}
+        </div>` : ''}
+      </div>`;
+    }).join('') : '<div style="color:var(--text-2)">Aucun résultat</div>'}`;
+
   document.getElementById('modal-detail').classList.add('open');
 }
 
