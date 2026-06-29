@@ -1147,6 +1147,8 @@ const GAMES_DEF = {
     img:'', img_banner:'' },
   maraudeurs:    { id:'maraudeurs', reveal:true, rules:'https://www.dontpanicgames.com/static/Maraudeurs-Midgard-regles-vf.pdf', name:'Maraudeurs de Midgard',      emoji:'', desc:'Décompte final · 6 tours', maxPlayers: 4,
     img:'', img_banner:'' },
+  faraway:       { id:'faraway',    reveal:true, rules:'https://media.play-in.com/pdf/rules_games/faraway_-_regles_fr.pdf',           name:'Faraway',                   emoji:'', desc:'8 cartes · décompte final', maxPlayers: 6,
+    img:'', img_banner:'' },
   narak:         { id:'narak',      rules:'https://iello.fr/wp-content/uploads/2021/01/Narak_Rulebook.pdf',           name:'Ruines Perdues de Narak',   emoji:'', desc:'Décompte final · 5 manches', maxPlayers: 4,
     img:'', img_banner:'' },
   citadelles:    { id:'citadelles', reveal:true, rules:'https://cdn.1j1ju.com/medias/cb/4e/c5-citadelles-regle.pdf',               name:'Citadelles',                emoji:'', desc:'7 quartiers · décompte final', maxPlayers: 7,
@@ -1387,6 +1389,7 @@ function startGame() {
   if (g.id === 'dewan')         initDewan();
   if (g.id === 'wingspan')      initWingspan();
   if (g.id === 'maraudeurs')    initMaraudeurs();
+  if (g.id === 'faraway')       initFaraway();
   if (g.id === 'narak')         initNarak();
   if (g.id === 'citadelles')    initCitadelles();
   if (g.id === 'viva_catrina')  initVivaCatrina();
@@ -3312,6 +3315,101 @@ function renderVivaCatrinaManche() {
   </div>`;
 }
 
+// ============================================================
+//  FARAWAY
+// ============================================================
+function initFaraway() {
+  const fields = ['carte1','carte2','carte3','carte4','carte5','carte6','carte7','carte8','sanctuaires','tiebreak'];
+  session.data.scores = Object.fromEntries(
+    session.players.map(p => [p.id, Object.fromEntries(fields.map(f => [f,'']))])
+  );
+}
+
+function updateFaraway(field, pid, val) {
+  session.data.scores[pid][field] = val;
+  // Mettre à jour seulement le total masqué (pas affiché à l'écran)
+}
+
+function renderFarawayManche() {
+  const { players, data } = session;
+  const el = document.getElementById('view-game');
+
+  el.innerHTML = `
+    <div class="manche-screen">
+      ${gameHeroHTML('faraway', 'Retournez vos cartes de droite à gauche',
+        '<button class="btn btn-primary btn-sm" onclick="finishGame(\'faraway\')">Résultats →</button>')}
+
+      <!-- En-têtes joueurs -->
+      <div style="display:flex;margin:0 0 6px">
+        <div style="flex:1"></div>
+        <div style="display:flex;gap:6px">
+          ${players.map(p => `<div style="width:72px;text-align:center;font-size:11px;color:var(--text-2);font-weight:500">${p.name}</div>`).join('')}
+        </div>
+      </div>
+
+      <!-- 8 cartes Région -->
+      <div class="card" style="margin-bottom:10px">
+        <div class="agr-section-head">Cartes Région (8 → 1)</div>
+        <div style="font-size:11px;color:var(--text-2);margin-bottom:8px;padding:0 2px">
+          Saisis les pts de chaque carte en commençant par la 8e (droite) jusqu'à la 1re (gauche)
+        </div>
+        ${[8,7,6,5,4,3,2,1].map(n => `
+          <div class="agr-row">
+            <div class="agr-label">
+              <div class="agr-label-text">Carte ${n}</div>
+            </div>
+            <div style="display:flex;gap:6px">
+              ${players.map(p => `<div style="width:72px">
+                <input type="text" inputmode="numeric" class="agr-field" style="width:100%"
+                  value="${data.scores[p.id]['carte'+n] || ''}" placeholder="—"
+                  oninput="updateFaraway('carte${n}','${p.id}',this.value)">
+              </div>`).join('')}
+            </div>
+          </div>`).join('')}
+      </div>
+
+      <!-- Sanctuaires -->
+      <div class="card" style="margin-bottom:10px">
+        <div class="agr-section-head">Sanctuaires</div>
+        <div class="agr-row">
+          <div class="agr-label">
+            <div class="agr-label-text">Total Sanctuaires</div>
+            <div class="agr-label-hint">Somme des pts de toutes tes cartes Sanctuaire</div>
+          </div>
+          <div style="display:flex;gap:6px">
+            ${players.map(p => `<div style="width:72px">
+              <input type="text" inputmode="numeric" class="agr-field" style="width:100%"
+                value="${data.scores[p.id].sanctuaires || ''}" placeholder="—"
+                oninput="updateFaraway('sanctuaires','${p.id}',this.value)">
+            </div>`).join('')}
+          </div>
+        </div>
+      </div>
+
+      <!-- Départage -->
+      <div class="card" style="margin-bottom:10px;background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.08)">
+        <div class="agr-section-head" style="color:var(--text-2)">Départage (égalité)</div>
+        <div class="agr-row">
+          <div class="agr-label">
+            <div class="agr-label-text">Plus petit temps d'exploration</div>
+            <div class="agr-label-hint">En cas d'égalité, le joueur avec la valeur la plus basse sur une carte gagne — ne compte pas dans le total</div>
+          </div>
+          <div style="display:flex;gap:6px">
+            ${players.map(p => `<div style="width:72px">
+              <input type="text" inputmode="numeric" class="agr-field" style="width:100%;color:var(--text-2)"
+                value="${data.scores[p.id].tiebreak || ''}" placeholder="—"
+                oninput="updateFaraway('tiebreak','${p.id}',this.value)">
+            </div>`).join('')}
+          </div>
+        </div>
+      </div>
+
+      <div class="manche-footer">
+        <button class="btn btn-primary btn-full" onclick="finishGame('faraway')">Voir les résultats</button>
+      </div>
+    </div>`;
+}
+
 function renderCurrentManche() {
   if (!session) return;
   if (session.gameId === 'flip7')         renderFlip7Manche();
@@ -3321,6 +3419,7 @@ function renderCurrentManche() {
   if (session.gameId === 'dewan')         renderDewanManche();
   if (session.gameId === 'wingspan')      renderWingspanManche();
   if (session.gameId === 'maraudeurs')    renderMaraudeursManche();
+  if (session.gameId === 'faraway')       renderFarawayManche();
   if (session.gameId === 'narak')         renderNarakManche();
   if (session.gameId === 'citadelles')    renderCitadellesManche();
   if (session.gameId === 'viva_catrina')  renderVivaCatrinaManche();
@@ -3405,6 +3504,17 @@ function finishGame(gameId) {
         return sum + agrScore(item.id, data.scores[p.id][item.id] || 0);
       }, 0)
     })).sort((a, b) => b.total - a.total);
+  }
+
+  if (gameId === 'faraway') {
+    results = players.map(p => {
+      const d = data.scores[p.id];
+      const cartes = [1,2,3,4,5,6,7,8].reduce((sum, n) => sum + (parseInt(d['carte'+n]) || 0), 0);
+      const sanctuaires = parseInt(d.sanctuaires) || 0;
+      const total = cartes + sanctuaires;
+      const tiebreak = parseInt(d.tiebreak) || 999; // plus petite valeur = gagne
+      return { ...p, total, _tiebreak: tiebreak };
+    }).sort((a,b) => b.total - a.total || a._tiebreak - b._tiebreak);
   }
 
   if (gameId === 'narak') {
