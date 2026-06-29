@@ -4482,13 +4482,20 @@ function loadTrack(idx, autoplay) {
   if (!audio) return;
   audio.src = audioTracks[idx].url;
   audio.volume = parseFloat(document.getElementById('audio-vol')?.value || 0.5);
+  // Mettre à jour le nom immédiatement
   const nameEl = document.getElementById('audio-track-name');
   if (nameEl) nameEl.textContent = audioTracks[idx].name;
   if (autoplay) {
-    audio.play().then(() => { isPlaying = true; updatePlayBtn(); }).catch(()=>{});
+    audio.play()
+      .then(() => { isPlaying = true; updatePlayBtn(); updateMusicHeaderBtn(); })
+      .catch(e => console.warn('Audio play error:', e));
+  } else {
+    // Même sans autoplay, mettre à jour l'état visuel
+    isPlaying = false;
+    updatePlayBtn();
+    updateMusicHeaderBtn();
   }
   renderAudioTracks();
-  updateMusicHeaderBtn();
 }
 
 function togglePlay() {
@@ -4544,6 +4551,10 @@ function updateMusicHeaderBtn() {
 document.addEventListener('DOMContentLoaded', () => {
   const audio = document.getElementById('bg-audio');
   if (audio) {
+    // Sync bouton play/pause avec l'état réel de l'audio
+    audio.addEventListener('play',  () => { isPlaying = true;  updatePlayBtn(); updateMusicHeaderBtn(); });
+    audio.addEventListener('pause', () => { isPlaying = false; updatePlayBtn(); updateMusicHeaderBtn(); });
+    audio.addEventListener('ended', () => { isPlaying = false; updatePlayBtn(); updateMusicHeaderBtn(); });
     audio.addEventListener('ended', () => {
       if (audioTracks.length > 1) nextTrack();
     });
@@ -4742,7 +4753,6 @@ function rollDice() {
 
 init();
 loadGameImages();
-loadAudioTracks();
 loadAudioConfig();
 
 // ---- SERVICE WORKER ----
