@@ -4827,17 +4827,27 @@ function updateThemeBtn() {
 
 // Musique podium
 function playPodiumMusic() {
-  const audio = document.getElementById('bg-audio');
-  const pod   = document.getElementById('podium-audio');
-  if (audio) audio.volume = 0.2;
+  // Couper complètement l'ambiance pendant le podium
+  const bgAudio = document.getElementById('bg-audio');
+  if (bgAudio) { bgAudio.pause(); }
+
   const doPlay = (url) => {
-    if (!url) return;
-    if (pod) { pod.src = url; pod.volume = 0.8; pod.play().catch(e => console.warn('Podium audio error:', e)); }
+    if (!url) { console.warn('Pas de musique podium configurée'); return; }
+    const pod = document.getElementById('podium-audio');
+    if (!pod) return;
+    pod.src = url;
+    pod.volume = 1.0;
+    pod.loop = false;
+    const playPromise = pod.play();
+    if (playPromise) {
+      playPromise.then(() => console.log('Musique podium démarrée ✓'))
+                 .catch(e => console.warn('Podium audio blocked:', e));
+    }
   };
+
   if (podiumUrl) {
     doPlay(podiumUrl);
   } else {
-    // Charger depuis Firebase si pas encore en mémoire
     db.ref(REF + '/audio/podium_url').once('value', snap => {
       const url = snap.val() || '';
       podiumUrl = url;
@@ -4845,12 +4855,17 @@ function playPodiumMusic() {
     });
   }
 }
+
 function stopPodiumMusic() {
   const pod = document.getElementById('podium-audio');
-  if (pod)  { pod.pause(); pod.currentTime = 0; }
-  const audio = document.getElementById('bg-audio');
-  if (audio) audio.volume = 0.5; // remonter l'ambiance
+  if (pod) { pod.pause(); pod.currentTime = 0; }
+  // Reprendre l'ambiance
+  const bgAudio = document.getElementById('bg-audio');
+  if (bgAudio && activeThemeIdx >= 0 && audioTracks[activeThemeIdx]) {
+    bgAudio.play().catch(() => {});
+  }
 }
+
 
 // toggleAudioPlayer / openMusicPicker → alias
 function toggleAudioPlayer() { openThemePicker(); }
