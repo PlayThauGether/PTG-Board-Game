@@ -4531,8 +4531,7 @@ function openAdminPanel() {
   db.ref(REF + '/admin_email').once('value', snap => {
     const adminEmail = snap.val();
     if (adminEmail && adminUser.email !== adminEmail) {
-      toast('Accès refusé');
-      auth.signOut();
+      toast('Accès refusé — ce compte n\'est pas administrateur');
       return;
     }
     // Afficher la page admin
