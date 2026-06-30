@@ -51,6 +51,38 @@ body {
   min-height: 100dvh;
 }
 
+/* ---- SPLASH SCREEN ---- */
+#splash-screen {
+  position: fixed; inset: 0; z-index: 99999;
+  background:
+    radial-gradient(ellipse 80% 60% at 20% -10%, rgba(59,96,170,.35) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 50% at 85% 15%, rgba(30,60,120,.25) 0%, transparent 55%),
+    radial-gradient(ellipse 70% 80% at 50% 110%, rgba(20,40,90,.4) 0%, transparent 60%),
+    linear-gradient(180deg, #0d1117 0%, #0f1629 40%, #0d1630 100%);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  transition: opacity .5s ease, visibility .5s ease;
+}
+#splash-screen.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+.splash-logo {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 42px; letter-spacing: .1em;
+  color: var(--text);
+}
+.splash-sub {
+  font-family: 'Inter', sans-serif;
+  font-size: 12px; color: var(--text-3);
+  margin-top: 4px; letter-spacing: .02em;
+}
+.splash-spinner {
+  width: 28px; height: 28px; margin-top: 28px;
+  border: 2.5px solid rgba(255,255,255,.12);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: splashSpin .8s linear infinite;
+}
+@keyframes splashSpin { to { transform: rotate(360deg); } }
+
 body::before {
   content: '';
   position: fixed; inset: 0; z-index: 0;
@@ -718,6 +750,12 @@ body::before {
 </style>
 </head>
 <body>
+<!-- SPLASH SCREEN — visible le temps que les images des jeux se chargent -->
+<div id="splash-screen">
+  <div class="splash-logo">CLUTCH</div>
+  <div class="splash-sub">by Play Thau'Gether</div>
+  <div class="splash-spinner"></div>
+</div>
 <div class="toast" id="toast"></div>
 <div class="app">
 
@@ -984,7 +1022,7 @@ body::before {
   <div class="modal" style="max-height:90vh;overflow-y:auto;padding-bottom:24px">
     <div class="modal-handle"></div>
     <div id="modal-detail-content"></div>
-    <div class="modal-actions" style="margin-top:16px">
+    <div class="modal-actions" style="margin-top:16px" id="modal-detail-actions">
       <button class="btn btn-danger btn-sm" onclick="deleteSession()">Supprimer</button>
       <button class="btn btn-primary btn-sm" onclick="shareSession()">📤 Partager</button>
       <button class="btn btn-glass btn-sm" onclick="closeModal('modal-detail')">Fermer</button>
@@ -1052,6 +1090,8 @@ const GAMES_DEF = {
   citadelles:    { id:'citadelles', reveal:true, rules:'https://cdn.1j1ju.com/medias/cb/4e/c5-citadelles-regle.pdf',               name:'Citadelles',                emoji:'', desc:'7 quartiers · décompte final', maxPlayers: 7,
     img:'', img_banner:'' },
   viva_catrina:  { id:'viva_catrina', reveal:true, rules:'https://cdn.blackrockgames.fr/items/FLY056VI/FR.pdf',                    name:'Viva Catrina',              emoji:'', desc:'Décompte final · tuiles', maxPlayers: 6,
+    img:'', img_banner:'' },
+  conspiracy:    { id:'conspiracy',   reveal:true, rules:'http://jeuxstrategie1.free.fr/jeu_conspiracy/regle.pdf',      name:'Conspiracy',                emoji:'', desc:'Décompte final · 4 catégories', maxPlayers: 4,
     img:'', img_banner:'' },
 };
 // Tri alphabétique
@@ -1290,6 +1330,7 @@ function startGame() {
   if (g.id === 'kingdomino')    initKingdomino();
   if (g.id === 'narak')         initNarak();
   if (g.id === 'citadelles')    initCitadelles();
+  if (g.id === 'conspiracy')    initConspiracy();
   if (g.id === 'viva_catrina')  initVivaCatrina();
   if (g.id === 'iaww')          initIAWW();
   if (g.id === 'pillards')      initPillards();
@@ -3208,6 +3249,135 @@ function renderVivaCatrinaManche() {
 // ============================================================
 //  FARAWAY
 // ============================================================
+function initConspiracy() {
+  const fields = ['seigneurs','lieux','coalition','maitre_perles','perles'];
+  session.data.scores = Object.fromEntries(
+    session.players.map(p => [p.id, Object.fromEntries(fields.map(f => [f, f==='maitre_perles'?'non':'']))])
+  );
+}
+
+function updateConspiracy(field, pid, val) {
+  session.data.scores[pid][field] = val;
+}
+
+function toggleConspiracy(field, pid) {
+  const cur = session.data.scores[pid][field];
+  session.data.scores[pid][field] = cur === 'oui' ? 'non' : 'oui';
+  renderConspiracyManche();
+}
+
+function renderConspiracyManche() {
+  const { players, data } = session;
+  const el = document.getElementById('view-game');
+
+  el.innerHTML = `
+    <div class="manche-screen">
+      ${gameHeroHTML('conspiracy', 'Décompte final · Chambre Sénatoriale',
+        '<button class="btn btn-primary btn-sm" onclick="finishGame(\'conspiracy\')">Résultats →</button>')}
+
+      <!-- En-têtes joueurs -->
+      <div style="display:flex;margin:0 0 6px">
+        <div style="flex:1"></div>
+        <div style="display:flex;gap:6px">
+          ${players.map(p => `<div style="width:72px;text-align:center;font-size:11px;color:var(--text-2);font-weight:500">${p.name}</div>`).join('')}
+        </div>
+      </div>
+
+      <!-- Seigneurs + Lieux -->
+      <div class="card" style="margin-bottom:10px">
+        <div class="agr-section-head">Influence</div>
+        <div class="agr-row">
+          <div class="agr-label">
+            <div class="agr-label-text">Seigneurs</div>
+            <div class="agr-label-hint">Somme des PI du Seigneur le plus influent de chaque couleur (pions Blason)</div>
+          </div>
+          <div style="display:flex;gap:6px">
+            ${players.map(p => `<div style="width:72px">
+              <input type="text" inputmode="numeric" class="agr-field" style="width:100%"
+                value="${data.scores[p.id].seigneurs || ''}" placeholder="—"
+                oninput="updateConspiracy('seigneurs','${p.id}',this.value)">
+            </div>`).join('')}
+          </div>
+        </div>
+        <div class="agr-row">
+          <div class="agr-label">
+            <div class="agr-label-text">Lieux</div>
+            <div class="agr-label-hint">Somme des PI rapportés par tes Lieux contrôlés</div>
+          </div>
+          <div style="display:flex;gap:6px">
+            ${players.map(p => `<div style="width:72px">
+              <input type="text" inputmode="numeric" class="agr-field" style="width:100%"
+                value="${data.scores[p.id].lieux || ''}" placeholder="—"
+                oninput="updateConspiracy('lieux','${p.id}',this.value)">
+            </div>`).join('')}
+          </div>
+        </div>
+      </div>
+
+      <!-- Coalition -->
+      <div class="card" style="margin-bottom:10px">
+        <div class="agr-section-head">Coalition</div>
+        <div class="agr-row">
+          <div class="agr-label">
+            <div class="agr-label-text">Plus grande Coalition</div>
+            <div class="agr-label-hint">Nombre de Seigneurs contigus de même couleur — 3 pts chacun, l'app multiplie</div>
+          </div>
+          <div style="display:flex;gap:6px">
+            ${players.map(p => `<div style="width:72px">
+              <input type="text" inputmode="numeric" class="agr-field" style="width:100%"
+                value="${data.scores[p.id].coalition || ''}" placeholder="—"
+                oninput="updateConspiracy('coalition','${p.id}',this.value)">
+            </div>`).join('')}
+          </div>
+        </div>
+      </div>
+
+      <!-- Maître des Perles -->
+      <div class="card" style="margin-bottom:10px">
+        <div class="agr-section-head">Bonus</div>
+        <div class="agr-row" style="align-items:center">
+          <div class="agr-label">
+            <div class="agr-label-text">Maître des Perles</div>
+            <div class="agr-label-hint">+5 pts pour le joueur qui détient ce pion en fin de partie</div>
+          </div>
+          <div style="display:flex;gap:6px">
+            ${players.map(p => {
+              const active = data.scores[p.id].maitre_perles === 'oui';
+              return `<div style="width:72px">
+                <button onclick="toggleConspiracy('maitre_perles','${p.id}')"
+                  style="width:100%;padding:8px 4px;border-radius:10px;border:1px solid ${active?'var(--green)':'var(--border)'};background:${active?'rgba(48,209,88,.15)':'var(--glass)'};color:${active?'var(--green)':'var(--text-2)'};font-family:inherit;font-size:12px;font-weight:600;cursor:pointer">
+                  ${active?'✓ Oui':'Non'}
+                </button>
+              </div>`;
+            }).join('')}
+          </div>
+        </div>
+      </div>
+
+      <!-- Départage -->
+      <div class="card" style="margin-bottom:10px;background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.08)">
+        <div class="agr-section-head" style="color:var(--text-2)">Départage (égalité)</div>
+        <div class="agr-row">
+          <div class="agr-label">
+            <div class="agr-label-text">Nombre de Perles</div>
+            <div class="agr-label-hint">Sert uniquement en cas d'égalité — ne compte pas dans le total</div>
+          </div>
+          <div style="display:flex;gap:6px">
+            ${players.map(p => `<div style="width:72px">
+              <input type="text" inputmode="numeric" class="agr-field" style="width:100%;color:var(--text-2)"
+                value="${data.scores[p.id].perles || ''}" placeholder="—"
+                oninput="updateConspiracy('perles','${p.id}',this.value)">
+            </div>`).join('')}
+          </div>
+        </div>
+      </div>
+
+      <div class="manche-footer">
+        <button class="btn btn-primary btn-full" onclick="finishGame('conspiracy')">Voir les résultats</button>
+      </div>
+    </div>`;
+}
+
 function initFaraway() {
   const fields = ['carte1','carte2','carte3','carte4','carte5','carte6','carte7','carte8','sanctuaires','tiebreak'];
   session.data.scores = Object.fromEntries(
@@ -3465,6 +3635,7 @@ function renderCurrentManche() {
   if (session.gameId === 'kingdomino')    renderKingdominoManche();
   if (session.gameId === 'narak')         renderNarakManche();
   if (session.gameId === 'citadelles')    renderCitadellesManche();
+  if (session.gameId === 'conspiracy')    renderConspiracyManche();
   if (session.gameId === 'viva_catrina')  renderVivaCatrinaManche();
   if (session.gameId === 'iaww')          renderIAWWManche();
   if (session.gameId === 'pillards')      renderPillardsManche();
@@ -3611,6 +3782,22 @@ function finishGame(gameId) {
       const total = quartiers + cinq_coul + premier_8 + autre_8;
       return { ...p, total };
     }).sort((a,b) => b.total - a.total);
+  }
+
+  if (gameId === 'conspiracy') {
+    results = players.map(p => {
+      const d = data.scores[p.id];
+      const seigneurs = parseInt(d.seigneurs) || 0;
+      const lieux     = parseInt(d.lieux)     || 0;
+      const coalition = parseInt(d.coalition) || 0;
+      const maitre    = d.maitre_perles === 'oui' ? 5 : 0;
+      const perles    = parseInt(d.perles)    || 0;
+      const total = seigneurs + lieux + (coalition * 3) + maitre;
+      return { ...p, total, _perles: perles };
+    }).sort((a,b) =>
+      b.total - a.total ||      // 1. total
+      b._perles - a._perles     // 2. départage : Perles
+    );
   }
 
   if (gameId === 'viva_catrina') {
@@ -3796,7 +3983,9 @@ function launchSimplePodium(results) {
         </div>`;
       }).join('')}
     </div>
-    <div class="reveal-buttons" id="sp-btns" style="max-width:420px;opacity:0;transition:opacity .5s">
+    <div class="reveal-buttons" id="sp-btns" style="max-width:420px;opacity:0;transition:opacity .5s;flex-wrap:wrap">
+      <button class="btn btn-glass" style="flex:1" onclick="showLiveDetail()">📋 Détail</button>
+      <button class="btn btn-glass" style="flex:1" onclick="shareLiveResults()">📤 Partager</button>
       <button class="btn btn-glass" style="flex:1" onclick="closeReveal();newGame()">Nouvelle partie</button>
       <button class="btn btn-primary" style="flex:1" onclick="closeReveal();saveAndFinish()">Sauvegarder</button>
     </div>`;
@@ -3897,7 +4086,9 @@ function launchReveal(results) {
         </div>`;
       }).join('')}
     </div>
-    <div id="rev-btns" class="reveal-buttons" style="max-width:500px;margin-top:32px">
+    <div id="rev-btns" class="reveal-buttons" style="max-width:500px;margin-top:32px;flex-wrap:wrap">
+      <button class="btn btn-glass" style="flex:1" onclick="showLiveDetail()">📋 Détail</button>
+      <button class="btn btn-glass" style="flex:1" onclick="shareLiveResults()">📤 Partager</button>
       <button class="btn btn-glass" style="flex:1" onclick="closeReveal();newGame()">Nouvelle partie</button>
       <button class="btn btn-primary" style="flex:1" onclick="closeReveal();saveAndFinish()">Sauvegarder</button>
     </div>`;
@@ -4108,15 +4299,17 @@ const SCORE_LABELS = {
   kingdomino:   {},
 };
 
-function showDetail(id) {
-  selectedSessId = id;
-  const s = sessions.find(x => x.id === id); if (!s) return;
+function renderDetailContent(s, opts) {
+  opts = opts || {};
   const rankEmojis = ['🥇','🥈','🥉'];
   const rankColors = ['#FFD60A','#C0C0C0','#CD7F32'];
-  const date = new Date(s.savedAt).toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+  const date = s.savedAt
+    ? new Date(s.savedAt).toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long', year:'numeric' })
+    : new Date().toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
   const g = GAMES[s.gameId];
   const banner = g?.img_banner || g?.img || '';
   const labels = SCORE_LABELS[s.gameId] || {};
+  const detailIdPrefix = opts.idPrefix || s.id || 'live';
 
   // Construire le détail des scores par joueur
   function playerScoreDetail(r) {
@@ -4132,7 +4325,6 @@ function showDetail(id) {
       // Calculer les pts selon le jeu et le champ
       let pts = null;
       if (gid === 'agricola') {
-        const AGR = { champs:[[-1,0],[0,0],[1,1],[2,2],[3,3],[4,4]], paturages:[[-1,0],[0,0],[1,1],[2,2],[3,3],[4,4]], cereales:[[-1,0],[0,0],[1,1],[2,2],[3,3],[4,4],[5,4]], legumes:[[-1,0],[0,0],[1,1],[2,2],[3,3],[4,4]], moutons:[[-1,0],[0,0],[1,1],[2,2],[3,3],[4,4],[5,4]], sangliers:[[-1,0],[0,0],[1,1],[2,2],[3,3],[4,4],[5,4]], boeufs:[[-1,0],[0,0],[1,1],[2,2],[3,3],[4,4]] };
         const AGRS = { champs:[[0,0],[1,1],[2,2],[3,3],[4,4]], paturages:[[0,0],[1,1],[2,2],[3,3],[4,4]], cereales:[[0,0],[1,1],[2,2],[3,3],[4,4],[5,4]], legumes:[[0,0],[1,1],[2,2],[3,3],[4,4]], moutons:[[0,0],[1,1],[2,2],[3,3],[4,4],[5,4]], sangliers:[[0,0],[1,1],[2,2],[3,3],[4,4],[5,4]], boeufs:[[0,0],[1,1],[2,2],[3,3],[4,4]] };
         const tbl = AGRS[k];
         if (tbl) { const row = [...tbl].reverse().find(([q]) => qty >= q); pts = row ? row[1] : 0; }
@@ -4172,8 +4364,13 @@ function showDetail(id) {
         else if (k==='echoppes') { const EP=[0,0,1,4,9,16,25]; pts = EP[Math.min(6,qty)]; }
         else pts = qty;
       } else if (gid === 'wingspan') {
-        if (['oiseaux','bonus','objectifs'].includes(k)) pts = qty;
-        else pts = qty; // oeufs, nourriture, cartes_gl = 1pt each
+        pts = qty; // oiseaux, bonus, objectifs, oeufs, nourriture, cartes_gl = direct ou 1pt
+      } else if (gid === 'citadelles') {
+        pts = qty; // quartiers = direct
+      } else if (gid === 'conspiracy') {
+        if (k==='coalition') pts = qty * 3;
+        else if (k==='perles') pts = null; // départage
+        else pts = qty;
       }
 
       const ptsStr = pts !== null ? `<span style="color:${pts<0?'var(--red)':'var(--accent)'}; font-weight:700; font-size:11px; margin-left:6px">${pts>=0?'+':''}${pts} pts</span>` : '';
@@ -4185,7 +4382,7 @@ function showDetail(id) {
     }).join('');
   }
 
-  document.getElementById('modal-detail-content').innerHTML = `
+  return `
     <!-- Header avec bannière -->
     <div style="position:relative;height:110px;margin:-20px -20px 16px;overflow:hidden;border-radius:16px 16px 0 0">
       ${banner
@@ -4219,7 +4416,7 @@ function showDetail(id) {
     <div style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text-2);margin-bottom:8px">Scores détaillés</div>
     ${s.results ? s.results.map((r, i) => {
       const detail = playerScoreDetail(r);
-      const uid = 'det-' + id + '-' + i;
+      const uid = 'det-' + detailIdPrefix + '-' + i;
       return `<div style="background:var(--glass);border:1px solid var(--border);border-radius:var(--r-lg);margin-bottom:6px;overflow:hidden">
         <div onclick="document.getElementById('${uid}').style.display=document.getElementById('${uid}').style.display==='none'?'block':'none'"
           style="display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer">
@@ -4233,7 +4430,25 @@ function showDetail(id) {
         </div>` : ''}
       </div>`;
     }).join('') : '<div style="color:var(--text-2)">Aucun résultat</div>'}`;
+}
 
+function showDetail(id) {
+  selectedSessId = id;
+  const s = sessions.find(x => x.id === id); if (!s) return;
+  document.getElementById('modal-detail-content').innerHTML = renderDetailContent(s, { idPrefix: id });
+  document.getElementById('modal-detail-actions').innerHTML = `
+    <button class="btn btn-danger btn-sm" onclick="deleteSession()">Supprimer</button>
+    <button class="btn btn-primary btn-sm" onclick="shareSession()">📤 Partager</button>
+    <button class="btn btn-glass btn-sm" onclick="closeModal('modal-detail')">Fermer</button>`;
+  document.getElementById('modal-detail').classList.add('open');
+}
+
+function showLiveDetail() {
+  if (!session || !session.results) return;
+  document.getElementById('modal-detail-content').innerHTML = renderDetailContent(session, { idPrefix: 'live' });
+  document.getElementById('modal-detail-actions').innerHTML = `
+    <button class="btn btn-primary btn-sm" onclick="shareLiveResults()">📤 Partager</button>
+    <button class="btn btn-glass btn-sm" onclick="closeModal('modal-detail')">Fermer</button>`;
   document.getElementById('modal-detail').classList.add('open');
 }
 
@@ -4680,6 +4895,21 @@ function saveGameOverride(gameId) {
 }
 
 // Charger les images depuis Firebase au démarrage
+// ---- SPLASH SCREEN ----
+let splashImagesLoaded = false;
+let splashOverridesLoaded = false;
+function hideSplashIfReady() {
+  if (splashImagesLoaded && splashOverridesLoaded) {
+    const splash = document.getElementById('splash-screen');
+    if (splash) splash.classList.add('hidden');
+  }
+}
+// Filet de sécurité : ne jamais bloquer l'app plus de 4s (Firebase lent/hors-ligne)
+setTimeout(() => {
+  const splash = document.getElementById('splash-screen');
+  if (splash) splash.classList.add('hidden');
+}, 4000);
+
 function loadGameImages() {
   db.ref(REF + '/game_images').on('value', snap => {
     const imgs = snap.val() || {};
@@ -4692,7 +4922,9 @@ function loadGameImages() {
       }
     });
     renderGameGrid();
-  });
+    splashImagesLoaded = true;
+    hideSplashIfReady();
+  }, () => { splashImagesLoaded = true; hideSplashIfReady(); }); // callback d'erreur : ne pas bloquer le splash
   // Charger les overrides (nom, desc, maxJoueurs, règles)
   db.ref(REF + '/game_overrides').on('value', snap => {
     const ovs = snap.val() || {};
@@ -4706,7 +4938,9 @@ function loadGameImages() {
       if (ov.reveal !== undefined) GAMES[id].reveal    = ov.reveal;
     });
     renderGameGrid();
-  });
+    splashOverridesLoaded = true;
+    hideSplashIfReady();
+  }, () => { splashOverridesLoaded = true; hideSplashIfReady(); }); // callback d'erreur : ne pas bloquer le splash
 }
 
 
@@ -5043,10 +5277,21 @@ function rollDice() {
 function shareSession() {
   const s = sessions.find(x => x.id === selectedSessId);
   if (!s) return;
+  generateShareCard(s);
+}
 
+function shareLiveResults() {
+  if (!session || !session.results) return;
+  // session n'a pas encore de savedAt tant qu'il n'est pas sauvegardé — generateShareCard gère ce cas
+  generateShareCard(session);
+}
+
+function generateShareCard(s) {
   const g = GAMES[s.gameId];
   const banner = g?.img_banner || g?.img || '';
-  const date = new Date(s.savedAt).toLocaleDateString('fr-FR', { day:'numeric', month:'long', year:'numeric' });
+  const date = s.savedAt
+    ? new Date(s.savedAt).toLocaleDateString('fr-FR', { day:'numeric', month:'long', year:'numeric' })
+    : new Date().toLocaleDateString('fr-FR', { day:'numeric', month:'long', year:'numeric' });
   const results = s.results || [];
   const winner = results[0];
   const others = results.slice(1);
@@ -5066,7 +5311,7 @@ function shareSession() {
       <!-- BANNIÈRE EN HAUT -->
       <div style="height:150px;position:relative;overflow:hidden;background:#1a2a4a">
         ${banner ? `
-          <div style="position:absolute;inset:0;
+          <div id="share-banner-bg" style="position:absolute;inset:0;
             background-image:url('${banner}');
             background-size:cover;background-position:center;
             filter:brightness(.65)"></div>
@@ -5127,10 +5372,11 @@ function shareSession() {
       </div>
     </div>`;
 
-  // Générer l'image avec html2canvas
   toast('Génération en cours...');
 
-  setTimeout(() => {
+  // Attendre que l'image de bannière soit RÉELLEMENT chargée avant de capturer
+  // (sinon html2canvas peut capturer avant que l'image de fond ne soit prête)
+  const captureCard = () => {
     html2canvas(card.firstElementChild, {
       backgroundColor: null,
       scale: 2,
@@ -5138,12 +5384,10 @@ function shareSession() {
       allowTaint: true,
       logging: false,
     }).then(canvas => {
-      // Télécharger en PNG
       const link = document.createElement('a');
       link.download = `Clutch-${s.gameName}-${date.replace(/ /g,'-')}.png`;
       link.href = canvas.toDataURL('image/png');
 
-      // Essayer de partager avec l'API Web Share (mobile)
       if (navigator.share && navigator.canShare) {
         canvas.toBlob(blob => {
           const file = new File([blob], link.download, { type:'image/png' });
@@ -5165,7 +5409,22 @@ function shareSession() {
       console.error(err);
       toast('Erreur lors de la génération');
     });
-  }, 300);
+  };
+
+  if (banner) {
+    // Précharger l'image réelle pour garantir qu'elle est disponible avant la capture
+    const preloadImg = new Image();
+    preloadImg.crossOrigin = 'anonymous';
+    let done = false;
+    const proceed = () => { if (!done) { done = true; setTimeout(captureCard, 80); } };
+    preloadImg.onload = proceed;
+    preloadImg.onerror = proceed; // même en cas d'erreur, on tente quand même la capture (fallback dégradé)
+    preloadImg.src = banner;
+    // Filet de sécurité : si l'image traîne (lent réseau), ne pas bloquer indéfiniment
+    setTimeout(proceed, 2500);
+  } else {
+    setTimeout(captureCard, 150);
+  }
 }
 
 // ============================================================
