@@ -6,10 +6,10 @@
 <meta name="theme-color" content="#0d1117">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="PTG Games">
+<meta name="apple-mobile-web-app-title" content="Clutch">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="application-name" content="PTG Games">
-<title>PTG · Board Games</title>
+<meta name="application-name" content="Clutch">
+<title>Clutch · by Play Thau'Gether</title>
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
@@ -67,8 +67,8 @@ body::before {
 /* ---- HEADER ---- */
 .header { padding: max(env(safe-area-inset-top),16px) 20px 0; flex-shrink: 0; }
 .header-inner { display: flex; align-items: center; justify-content: space-between; padding: 14px 0 10px; }
-.logo { font-size: 17px; font-weight: 700; letter-spacing: .06em; font-family: 'Bebas Neue', sans-serif; }
-.logo-dot { color: var(--accent); }
+.logo { font-size: 17px; font-weight: 700; letter-spacing: .06em; font-family: 'Bebas Neue', sans-serif; display: flex; align-items: baseline; gap: 7px; }
+.logo-sub { font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 500; letter-spacing: 0; color: var(--text-3); white-space: nowrap; }
 
 /* ---- NAV ---- */
 .nav { padding: 0 20px 12px; flex-shrink: 0; }
@@ -717,7 +717,7 @@ body::before {
   <!-- HEADER -->
   <header class="header">
     <div class="header-inner">
-      <div class="logo">PTG<span class="logo-dot"> · </span>Board Games</div>
+      <div class="logo">CLUTCH<span class="logo-sub">by Play Thau'Gether</span></div>
       <div style="display:flex;align-items:center;gap:8px">
         <button id="pwa-install-btn" onclick="installPWA()" style="display:none;align-items:center;gap:6px;background:rgba(100,210,255,.15);border:1px solid rgba(100,210,255,.3);border-radius:20px;padding:6px 12px;color:#64D2FF;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">
           Installer
@@ -888,7 +888,7 @@ body::before {
   <div class="modal">
     <div class="modal-handle"></div>
     <div class="modal-title">Accès admin</div>
-    <p style="font-size:13px;color:var(--text-2);margin-bottom:16px">Connecte-toi avec ton compte Google PTG pour accéder à l'administration.</p>
+    <p style="font-size:13px;color:var(--text-2);margin-bottom:16px">Connecte-toi avec ton compte Google administrateur pour accéder à l'administration.</p>
     <button class="btn btn-primary btn-full" onclick="signInGoogle()">Se connecter avec Google</button>
     <div class="modal-actions">
       <button class="btn btn-glass btn-sm" onclick="closeModal('modal-login')">Annuler</button>
@@ -5114,7 +5114,7 @@ function shareSession() {
         <!-- Footer -->
         <div style="display:flex;justify-content:space-between;align-items:center;
           padding-top:12px;border-top:1px solid rgba(255,255,255,.07)">
-          <span style="font-size:11px;color:rgba(255,255,255,.25);letter-spacing:.1em;font-weight:700">PTG · BOARD GAMES</span>
+          <span style="font-size:11px;color:rgba(255,255,255,.25);letter-spacing:.1em;font-weight:700">CLUTCH · BY PLAY THAU'GETHER</span>
           <span style="font-size:11px;color:rgba(255,255,255,.25)">${s.players?.length || 0} joueurs</span>
         </div>
 
@@ -5134,7 +5134,7 @@ function shareSession() {
     }).then(canvas => {
       // Télécharger en PNG
       const link = document.createElement('a');
-      link.download = `PTG-${s.gameName}-${date.replace(/ /g,'-')}.png`;
+      link.download = `Clutch-${s.gameName}-${date.replace(/ /g,'-')}.png`;
       link.href = canvas.toDataURL('image/png');
 
       // Essayer de partager avec l'API Web Share (mobile)
@@ -5143,7 +5143,7 @@ function shareSession() {
           const file = new File([blob], link.download, { type:'image/png' });
           if (navigator.canShare({ files:[file] })) {
             navigator.share({
-              title: `${s.gameName} — PTG Board Games`,
+              title: `${s.gameName} — Clutch`,
               text: `${winner?.name} gagne avec ${winner?.total} pts !`,
               files: [file]
             }).catch(() => { link.click(); });

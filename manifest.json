@@ -1,6 +1,7 @@
 {
-  "name": "PTG · Board Games",
-  "short_name": "PTG · BGC",
+  "name": "Clutch · by Play Thau'Gether",
+  "short_name": "Clutch",
+  "description": "Compteur de scores pour jeux de société, by Play Thau'Gether",
   "start_url": ".",
   "display": "standalone",
   "background_color": "#0d1117",
